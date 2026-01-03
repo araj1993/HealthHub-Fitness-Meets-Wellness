@@ -82,12 +82,12 @@ Automatically generated for user registrations with:
 
 1. **Clone or navigate to the project directory:**
 ```bash
-cd "c:\Users\KIRAN\Documents\araj1993-git\FINAL\HealthHub-Where-Fitness-Meets-Wellness"
+cd "path_to_where_repo_should_be_cloned"
 ```
 
 2. **Activate virtual environment:**
 ```powershell
-& "C:/Users/KIRAN/Documents/araj1993-git/FINAL/.venv/Scripts/Activate.ps1"
+& "/.venv/Scripts/Activate.ps1"
 ```
 
 3. **Install dependencies:**
@@ -242,20 +242,6 @@ python manage.py test
 python manage.py createsuperuser
 ```
 
-### Collecting Static Files (for production)
-```bash
-python manage.py collectstatic
-```
-
-## Security Notes
-
-- Change `SECRET_KEY` in production
-- Set `DEBUG = False` in production
-- Configure `ALLOWED_HOSTS` for production
-- Use environment variables for sensitive data
-- Implement HTTPS in production
-- Set up proper database backups
-
 ## Future Enhancements
 
 - Email notifications for registrations
@@ -270,8 +256,8 @@ python manage.py collectstatic
 ## Support
 
 For issues or questions, please contact:
-- Email: support@healthhub.com
-- Phone: +1-800-FITNESS
+- Email: TBD
+- Phone: TBD
 
 ## License
 
@@ -279,4 +265,3 @@ This project is developed for HealthHub - Where Fitness Meets Wellness.
 
 ---
 
-**Built with ❤️ using Django**
