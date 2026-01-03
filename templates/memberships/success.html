@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Registration Successful - HealthHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-success" style="font-size: 80px;"></i>
+                </div>
+                
+                <h1 class="display-4 text-success mb-3">Registration Successful!</h1>
+                <p class="lead text-muted mb-4">
+                    Welcome to HealthHub, {{ membership.user.full_name }}!
+                </p>
+                
+                <div class="row mt-5">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h4 class="text-primary mb-3">
+                                    <i class="fas fa-user-circle"></i> Member Details
+                                </h4>
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="text-end"><strong>Name:</strong></td>
+                                        <td>{{ membership.user.full_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-end"><strong>Email:</strong></td>
+                                        <td>{{ membership.user.email }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-end"><strong>Phone:</strong></td>
+                                        <td>{{ membership.user.phone_number }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-end"><strong>Registration ID:</strong></td>
+                                        <td><code>{{ membership.registration_id }}</code></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h4 class="text-success mb-3">
+                                    <i class="fas fa-trophy"></i> Membership Details
+                                </h4>
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="text-end"><strong>Tier:</strong></td>
+                                        <td><span class="badge bg-success">{{ membership.get_membership_tier_display }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-end"><strong>Joining Date:</strong></td>
+                                        <td>{{ membership.date_of_joining|date:"F d, Y" }}</td>
+                                    </tr>
+                                    {% if membership.pay_monthly_in_advance %}
+                                    <tr>
+                                        <td class="text-end"><strong>Advance Payment:</strong></td>
+                                        <td>{{ membership.months_selected }} months</td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr>
+                                        <td class="text-end"><strong>Total Amount:</strong></td>
+                                        <td><h4 class="text-success mb-0">₹{{ membership.total_amount|floatformat:2 }}</h4></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if membership.membership_tier == 'L2' or membership.membership_tier == 'L3' %}
+                <div class="card mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-list-check"></i> Your Amenities</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            {% if membership.membership_tier == 'L1' %}
+                                <li class="list-group-item"><i class="fas fa-check text-success"></i> Basic Gym Access</li>
+                                <li class="list-group-item"><i class="fas fa-check text-success"></i> Standard Equipment</li>
+                            {% elif membership.membership_tier == 'L2' %}
+                                <li class="list-group-item"><i class="fas fa-check text-success"></i> All L1 Features</li>
+                                <li class="list-group-item"><i class="fas fa-check text-success"></i> AI Workout Planner</li>
+                                <li class="list-group-item"><i class="fas fa-check text-success"></i> Nutrition Recommendations</li>
+                                <li class="list-group-item"><i class="fas fa-check text-success"></i> Weekly Performance Insights</li>
+                                <li class="list-group-item"><i class="fas fa-check text-success"></i> Stress & Activity Analysis</li>
+                                {% if membership.extra_protein_needed %}
+                                <li class="list-group-item"><i class="fas fa-check text-success"></i> Extra Protein Supplementation</li>
+                                {% endif %}
+                            {% elif membership.membership_tier == 'L3' %}
+                                <li class="list-group-item"><i class="fas fa-check text-success"></i> All L1 + L2 Features</li>
+                                <li class="list-group-item"><i class="fas fa-star text-warning"></i> Daily Protein Shake (40g)</li>
+                                {% for addon in membership.l3_addons.all %}
+                                <li class="list-group-item"><i class="fas fa-crown text-warning"></i> {{ addon.get_addon_type_display }}</li>
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if membership.receipt and membership.receipt.pdf_file %}
+                <div class="mt-5">
+                    <h4 class="mb-3"><i class="fas fa-file-pdf text-danger"></i> Your Receipt</h4>
+                    <p class="text-muted">Your payment receipt has been generated and is ready to download.</p>
+                    <a href="{{ membership.receipt.pdf_file.url }}" class="btn btn-danger btn-lg" download>
+                        <i class="fas fa-download"></i> Download PDF Receipt
+                    </a>
+                </div>
+                {% endif %}
+                
+                <div class="mt-5">
+                    <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home"></i> Go to Home
+                    </a>
+                    <a href="/admin/" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-user-shield"></i> Admin Panel
+                    </a>
+                </div>
+                
+                <div class="alert alert-info mt-4">
+                    <i class="fas fa-envelope"></i> A confirmation email has been sent to <strong>{{ membership.user.email }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

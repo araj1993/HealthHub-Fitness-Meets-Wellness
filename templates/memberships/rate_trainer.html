@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Rate Trainer - HealthHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rating-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .trainer-info {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .star-rating {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 3rem;
+        margin: 2rem 0;
+    }
+    
+    .star-rating input {
+        display: none;
+    }
+    
+    .star-rating label {
+        cursor: pointer;
+        color: #d1d5db;
+        transition: all 0.2s ease;
+    }
+    
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        color: #fbbf24;
+        transform: scale(1.1);
+    }
+    
+    .review-textarea {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+    
+    .review-textarea:focus {
+        border-color: #f59e0b;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+    
+    .submit-btn {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        width: 100%;
+        transition: transform 0.2s ease;
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+    
+    .existing-rating {
+        background: #eff6ff;
+        border-left: 4px solid #3b82f6;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="rating-container">
+        <a href="{% url 'user_dashboard' %}" class="btn btn-outline-secondary mb-3">
+            <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+        </a>
+        
+        <div class="trainer-info">
+            <h2 class="mb-2">
+                <i class="fas fa-user-tie me-2"></i> {{ trainer.full_name }}
+            </h2>
+            <p class="mb-0">Rate Your Trainer Experience</p>
+        </div>
+        
+        {% if existing_rating %}
+        <div class="existing-rating">
+            <p class="mb-2"><strong><i class="fas fa-info-circle me-2"></i>You've already rated this trainer</strong></p>
+            <p class="mb-0">Your current rating: <span class="text-warning fw-bold">{{ existing_rating.rating }} <i class="fas fa-star"></i></span></p>
+            <p class="mb-0 mt-2"><small>You can update your rating below.</small></p>
+        </div>
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold d-block text-center mb-3">
+                    <i class="fas fa-star me-2"></i> Select Your Rating
+                </label>
+                <div class="star-rating">
+                    <input type="radio" name="rating" value="5" id="star5" {% if existing_rating.rating == 5 %}checked{% endif %} required>
+                    <label for="star5"><i class="fas fa-star"></i></label>
+                    
+                    <input type="radio" name="rating" value="4" id="star4" {% if existing_rating.rating == 4 %}checked{% endif %}>
+                    <label for="star4"><i class="fas fa-star"></i></label>
+                    
+                    <input type="radio" name="rating" value="3" id="star3" {% if existing_rating.rating == 3 %}checked{% endif %}>
+                    <label for="star3"><i class="fas fa-star"></i></label>
+                    
+                    <input type="radio" name="rating" value="2" id="star2" {% if existing_rating.rating == 2 %}checked{% endif %}>
+                    <label for="star2"><i class="fas fa-star"></i></label>
+                    
+                    <input type="radio" name="rating" value="1" id="star1" {% if existing_rating.rating == 1 %}checked{% endif %}>
+                    <label for="star1"><i class="fas fa-star"></i></label>
+                </div>
+                <p class="text-center text-muted small">
+                    <i class="fas fa-info-circle me-1"></i> 5 stars = Excellent, 1 star = Poor
+                </p>
+            </div>
+            
+            <div class="mb-4">
+                <label for="review" class="form-label fw-bold">
+                    <i class="fas fa-comment me-2"></i> Your Review (Optional)
+                </label>
+                <textarea 
+                    class="form-control review-textarea" 
+                    name="review" 
+                    id="review" 
+                    rows="5" 
+                    placeholder="Share your experience with this trainer...">{% if existing_rating %}{{ existing_rating.review }}{% endif %}</textarea>
+            </div>
+            
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-paper-plane me-2"></i>
+                {% if existing_rating %}Update Rating{% else %}Submit Rating{% endif %}
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Reverse star order for proper highlighting
+    const stars = document.querySelectorAll('.star-rating label');
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = this.previousElementSibling.value;
+            console.log('Selected rating:', rating);
+        });
+    });
+</script>
+{% endblock %}

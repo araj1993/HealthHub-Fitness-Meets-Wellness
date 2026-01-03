@@ -1,0 +1,797 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to HealthHub - Fitness & Wellness Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-banner {
+        position: relative;
+        padding: 100px 0 80px;
+        margin-bottom: 50px;
+    }
+    
+    .hero-title {
+        font-size: 4.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -3px;
+        margin-bottom: 1.5rem;
+        line-height: 1.1;
+        text-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+    }
+    
+    .hero-subtitle {
+        font-size: 1.5rem;
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 400;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .action-card {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 24px;
+        padding: 2.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 2px solid transparent;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-10px);
+        border-color: rgba(59, 130, 246, 0.3);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+    
+    .action-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        display: inline-block;
+    }
+    
+    .action-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .action-description {
+        color: #64748b;
+        font-size: 1.05rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+    
+    .feature-box {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid;
+    }
+    
+    .feature-box.blue { border-color: #3b82f6; }
+    .feature-box.purple { border-color: #8b5cf6; }
+    .feature-box.pink { border-color: #ec4899; }
+    .feature-box.green { border-color: #10b981; }
+    
+    /* AI Chatbot Styles */
+    .chatbot-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+    }
+    
+    .chatbot-toggle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .chatbot-toggle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 25px rgba(59, 130, 246, 0.6);
+    }
+    
+    .chatbot-window {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        width: 350px;
+        height: 500px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .chatbot-window.active {
+        display: flex;
+    }
+    
+    .chatbot-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        color: white;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .chatbot-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f8f9fa;
+    }
+    
+    .chat-message {
+        margin-bottom: 1rem;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .message-bot {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .message-user {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+    
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 0.9rem;
+    }
+    
+    .avatar-bot {
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        color: white;
+    }
+    
+    .avatar-user {
+        background: #10b981;
+        color: white;
+    }
+    
+    .message-bubble {
+        max-width: 75%;
+        padding: 0.75rem 1rem;
+        border-radius: 16px;
+        word-wrap: break-word;
+    }
+    
+    .bubble-bot {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-bottom-left-radius: 4px;
+    }
+    
+    .bubble-user {
+        background: #10b981;
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .chatbot-input-area {
+        padding: 1rem;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .chatbot-input {
+        flex: 1;
+        border: 1px solid #e5e7eb;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        outline: none;
+    }
+    
+    .chatbot-input:focus {
+        border-color: #3b82f6;
+    }
+    
+    .chatbot-send {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .chatbot-send:hover {
+        transform: scale(1.1);
+    }
+    
+    .quick-questions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .quick-question-btn {
+        background: white;
+        border: 1px solid #3b82f6;
+        color: #3b82f6;
+        padding: 0.4rem 0.8rem;
+        border-radius: 16px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-question-btn:hover {
+        background: #3b82f6;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-banner text-center">
+    <div class="container">
+        <h1 class="hero-title">
+            <i class="fas fa-heartbeat" style="color: #ec4899;"></i> HealthHub
+        </h1>
+        <p class="hero-subtitle">
+            Transform Your Life with Premium Fitness & Wellness Solutions
+        </p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <span class="badge bg-primary fs-6 px-4 py-2">
+                <i class="fas fa-dumbbell me-2"></i> World-Class Facilities
+            </span>
+            <span class="badge bg-success fs-6 px-4 py-2">
+                <i class="fas fa-user-tie me-2"></i> Expert Trainers
+            </span>
+            <span class="badge bg-warning text-dark fs-6 px-4 py-2">
+                <i class="fas fa-chart-line me-2"></i> AI-Powered Insights
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row g-4 mb-5">
+        <!-- Registration Card -->
+        <div class="col-lg-6">
+            <div class="action-card">
+                <div class="action-icon" style="color: #3b82f6;">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h2 class="action-title" style="color: #1e293b;">Join HealthHub</h2>
+                <p class="action-description">
+                    Register as a member, trainer, or admin. Choose from 3 flexible membership tiers 
+                    designed to match your fitness goals and lifestyle.
+                </p>
+                <a href="{% url 'home' %}" class="btn btn-primary btn-lg px-5 py-3">
+                    <i class="fas fa-arrow-right me-2"></i> Start Registration
+                </a>
+                <div class="mt-4">
+                    <small class="text-muted">
+                        <i class="fas fa-users me-2"></i> Join 500+ Active Members
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Login Card -->
+        <div class="col-lg-6">
+            <div class="action-card">
+                <div class="action-icon" style="color: #10b981;">
+                    <i class="fas fa-sign-in-alt"></i>
+                </div>
+                <h2 class="action-title" style="color: #1e293b;">Member Login</h2>
+                <p class="action-description">
+                    Already a member? Access your personalized dashboard to track progress, 
+                    view membership details, and manage your fitness journey.
+                </p>
+                <a href="{% url 'login' %}" class="btn btn-success btn-lg px-5 py-3">
+                    <i class="fas fa-lock me-2"></i> Login Now
+                </a>
+                <div class="mt-4">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-2"></i> Secure Access for Admin, User & Trainer
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div class="row">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold" style="color: white; font-size: 2.5rem;">
+                Why Choose HealthHub?
+            </h2>
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem;">
+                Premium features designed for your success
+            </p>
+        </div>
+        
+        <div class="col-lg-6 col-md-6">
+            <div class="feature-box blue">
+                <h4 class="fw-bold mb-3">
+                    <i class="fas fa-robot text-primary me-2"></i> AI-Powered Workouts
+                </h4>
+                <p class="mb-0 text-muted">
+                    Get personalized workout plans generated by advanced AI algorithms based on 
+                    your goals, fitness level, and progress tracking.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 col-md-6">
+            <div class="feature-box purple">
+                <h4 class="fw-bold mb-3">
+                    <i class="fas fa-user-md" style="color: #8b5cf6;" me-2></i> Expert Trainers
+                </h4>
+                <p class="mb-0 text-muted">
+                    Work with certified fitness professionals specializing in various disciplines 
+                    from strength training to yoga and martial arts.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 col-md-6">
+            <div class="feature-box pink">
+                <h4 class="fw-bold mb-3">
+                    <i class="fas fa-apple-alt" style="color: #ec4899;" me-2></i> Nutrition Hub
+                </h4>
+                <p class="mb-0 text-muted">
+                    Access personalized meal plans, premium protein shakes, and nutritional 
+                    guidance tailored to complement your fitness routine.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 col-md-6">
+            <div class="feature-box green">
+                <h4 class="fw-bold mb-3">
+                    <i class="fas fa-brain text-success me-2"></i> Mental Wellness
+                </h4>
+                <p class="mb-0 text-muted">
+                    Monitor stress levels, track mental well-being, and access resources for 
+                    a holistic approach to health and fitness.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Human Body Anatomy Section -->
+    <div class="row mt-5 mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold" style="color: white; font-size: 2.5rem;">
+                <i class="fas fa-user-md text-danger me-2"></i> Target Every Muscle Group
+            </h2>
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem;">
+                Understand your body and learn how to strengthen each muscle group
+            </p>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 border-0" style="background: rgba(255, 255, 255, 0.98);">
+                <div class="card-body p-4">
+                    <div class="text-center mb-3">
+                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80" 
+                             alt="Upper Body" class="img-fluid rounded-3" style="max-height: 300px; object-fit: cover;">
+                    </div>
+                    <h4 class="fw-bold mb-3 text-primary">
+                        <i class="fas fa-dumbbell me-2"></i> Upper Body
+                    </h4>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-danger">
+                            <i class="fas fa-heart-pulse me-2"></i> Chest (Pectorals)
+                        </h6>
+                        <p class="mb-2 small">
+                            <strong>Function:</strong> Push movements, arm adduction, shoulder flexion<br>
+                            <strong>Best Exercises:</strong> Bench Press, Push-ups, Dumbbell Flyes, Cable Crossovers<br>
+                            <strong>Training Tip:</strong> Focus on full range of motion and squeeze at peak contraction
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-danger">
+                            <i class="fas fa-shield-alt me-2"></i> Back (Latissimus Dorsi, Trapezius)
+                        </h6>
+                        <p class="mb-2 small">
+                            <strong>Function:</strong> Pull movements, shoulder extension, posture support<br>
+                            <strong>Best Exercises:</strong> Pull-ups, Rows, Deadlifts, Lat Pulldowns<br>
+                            <strong>Training Tip:</strong> Retract shoulder blades and pull with elbows, not hands
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-danger">
+                            <i class="fas fa-circle me-2"></i> Shoulders (Deltoids)
+                        </h6>
+                        <p class="mb-2 small">
+                            <strong>Function:</strong> Arm rotation, overhead pressing, lateral movements<br>
+                            <strong>Best Exercises:</strong> Shoulder Press, Lateral Raises, Front Raises, Face Pulls<br>
+                            <strong>Training Tip:</strong> Train all three heads (anterior, lateral, posterior) equally
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-danger">
+                            <i class="fas fa-hand-fist me-2"></i> Arms (Biceps & Triceps)
+                        </h6>
+                        <p class="mb-2 small">
+                            <strong>Function:</strong> Arm flexion (biceps) and extension (triceps)<br>
+                            <strong>Best Exercises:</strong> Curls, Chin-ups (biceps), Dips, Close-grip Press (triceps)<br>
+                            <strong>Training Tip:</strong> Control the eccentric (lowering) phase for maximum growth
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100 border-0" style="background: rgba(255, 255, 255, 0.98);">
+                <div class="card-body p-4">
+                    <div class="text-center mb-3">
+                        <img src="https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=600&q=80" 
+                             alt="Lower Body" class="img-fluid rounded-3" style="max-height: 300px; object-fit: cover;">
+                    </div>
+                    <h4 class="fw-bold mb-3 text-success">
+                        <i class="fas fa-running me-2"></i> Lower Body & Core
+                    </h4>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-danger">
+                            <i class="fas fa-fire me-2"></i> Core (Abs & Obliques)
+                        </h6>
+                        <p class="mb-2 small">
+                            <strong>Function:</strong> Spinal stability, trunk rotation, posture<br>
+                            <strong>Best Exercises:</strong> Planks, Crunches, Russian Twists, Leg Raises, Cable Woodchops<br>
+                            <strong>Training Tip:</strong> Focus on anti-rotation and bracing movements for functional strength
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-danger">
+                            <i class="fas fa-person-walking me-2"></i> Legs (Quadriceps & Hamstrings)
+                        </h6>
+                        <p class="mb-2 small">
+                            <strong>Function:</strong> Knee extension (quads), knee flexion (hamstrings), walking, running<br>
+                            <strong>Best Exercises:</strong> Squats, Lunges, Leg Press, Leg Curls, Romanian Deadlifts<br>
+                            <strong>Training Tip:</strong> Full depth squats for complete quad and glute development
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-danger">
+                            <i class="fas fa-shoe-prints me-2"></i> Glutes & Hips
+                        </h6>
+                        <p class="mb-2 small">
+                            <strong>Function:</strong> Hip extension, stabilization, power generation<br>
+                            <strong>Best Exercises:</strong> Hip Thrusts, Glute Bridges, Deadlifts, Bulgarian Split Squats<br>
+                            <strong>Training Tip:</strong> Squeeze glutes at the top and use mind-muscle connection
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-danger">
+                            <i class="fas fa-boot me-2"></i> Calves (Gastrocnemius & Soleus)
+                        </h6>
+                        <p class="mb-2 small">
+                            <strong>Function:</strong> Ankle plantarflexion, jumping, walking stability<br>
+                            <strong>Best Exercises:</strong> Calf Raises (standing & seated), Jump Rope, Box Jumps<br>
+                            <strong>Training Tip:</strong> High reps with full stretch and contraction for calf growth
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recovery & Injury Prevention -->
+        <div class="col-12">
+            <div class="card border-0" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);">
+                <div class="card-body p-4 text-white">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8">
+                            <h4 class="fw-bold mb-3">
+                                <i class="fas fa-heartbeat me-2"></i> Injury Prevention & Recovery
+                            </h4>
+                            <ul class="mb-0">
+                                <li class="mb-2">
+                                    <strong>Warm-Up:</strong> 5-10 minutes of dynamic stretching and light cardio before workouts
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Progressive Overload:</strong> Gradually increase weight/reps to avoid sudden strain
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Rest Days:</strong> Allow 48 hours between training the same muscle group
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Proper Form:</strong> Quality over quantity - master technique before adding weight
+                                </li>
+                                <li class="mb-2">
+                                    <strong>Nutrition:</strong> Adequate protein (1.6-2.2g per kg body weight) for muscle repair
+                                </li>
+                                <li class="mb-0">
+                                    <strong>Sleep:</strong> 7-9 hours per night for optimal recovery and muscle growth
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-lg-4 text-center">
+                            <img src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=400&q=80" 
+                                 alt="Recovery" class="img-fluid rounded-3" style="max-height: 250px; object-fit: cover;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Membership Tiers Preview -->
+    <div class="row mt-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="fw-bold" style="color: white; font-size: 2.5rem;">
+                <i class="fas fa-star text-warning me-2"></i> Membership Tiers
+            </h2>
+        </div>
+        
+        <div class="col-lg-4 col-md-4">
+            <div class="card text-center border-0" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                <div class="card-body py-4">
+                    <h3 class="text-white fw-bold mb-3">
+                        <i class="fas fa-walking me-2"></i> L1 FitStarter
+                    </h3>
+                    <h2 class="text-white mb-3">₹1,500<small>/month</small></h2>
+                    <p class="text-white opacity-75">Perfect for beginners</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-4">
+            <div class="card text-center border-0" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                <div class="card-body py-4">
+                    <h3 class="text-white fw-bold mb-3">
+                        <i class="fas fa-running me-2"></i> L2 ProActive
+                    </h3>
+                    <h2 class="text-white mb-3">₹2,500<small>/month</small></h2>
+                    <p class="text-white opacity-75">AI insights & nutrition</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-4">
+            <div class="card text-center border-0" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <div class="card-body py-4">
+                    <h3 class="text-white fw-bold mb-3">
+                        <i class="fas fa-crown me-2"></i> L3 EliteChamp
+                    </h3>
+                    <h2 class="text-white mb-3">₹2,500+<small>/month</small></h2>
+                    <p class="text-white opacity-75">Premium with add-ons</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Chatbot Widget -->
+<div class="chatbot-container">
+    <button class="chatbot-toggle" id="chatbotToggle">
+        <i class="fas fa-robot"></i>
+    </button>
+    
+    <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+            <div>
+                <h6 class="mb-0 fw-bold">
+                    <i class="fas fa-robot me-2"></i> HealthHub AI Assistant
+                </h6>
+                <small class="opacity-75">Ask me anything about fitness!</small>
+            </div>
+            <button class="btn btn-sm text-white" id="chatbotClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="chatbot-messages" id="chatbotMessages">
+            <div class="chat-message message-bot">
+                <div class="message-avatar avatar-bot">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="message-bubble bubble-bot">
+                    👋 Hi! I'm your HealthHub AI Assistant. I can help you with:
+                    <ul class="mb-0 mt-2" style="font-size: 0.9rem;">
+                        <li>Workout recommendations</li>
+                        <li>Nutrition advice</li>
+                        <li>Membership questions</li>
+                        <li>Exercise techniques</li>
+                    </ul>
+                    <div class="quick-questions">
+                        <button class="quick-question-btn" onclick="sendQuickQuestion('What membership should I choose?')">
+                            Membership advice
+                        </button>
+                        <button class="quick-question-btn" onclick="sendQuickQuestion('Best exercises for beginners?')">
+                            Beginner workouts
+                        </button>
+                        <button class="quick-question-btn" onclick="sendQuickQuestion('How to build muscle?')">
+                            Build muscle
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chatbot-input-area">
+            <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Type your question...">
+            <button class="chatbot-send" id="chatbotSend">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Chatbot functionality
+    const chatbotToggle = document.getElementById('chatbotToggle');
+    const chatbotWindow = document.getElementById('chatbotWindow');
+    const chatbotClose = document.getElementById('chatbotClose');
+    const chatbotMessages = document.getElementById('chatbotMessages');
+    const chatbotInput = document.getElementById('chatbotInput');
+    const chatbotSend = document.getElementById('chatbotSend');
+    
+    // Toggle chatbot window
+    chatbotToggle.addEventListener('click', () => {
+        chatbotWindow.classList.toggle('active');
+        if (chatbotWindow.classList.contains('active')) {
+            chatbotInput.focus();
+        }
+    });
+    
+    chatbotClose.addEventListener('click', () => {
+        chatbotWindow.classList.remove('active');
+    });
+    
+    // AI Response database
+    const responses = {
+        'membership': {
+            keywords: ['membership', 'tier', 'join', 'price', 'cost', 'plan'],
+            answer: "We offer 3 membership tiers:\n\n🏃 L1 FitStarter (₹1,500/month) - Perfect for beginners with basic gym access\n\n💪 L2 ProActive (₹2,500/month) - Includes AI workout planner, nutrition recommendations, and performance insights\n\n👑 L3 EliteChamp (₹2,500+/month) - Premium tier with customizable add-ons like personal trainers, nutrition hub, and mental wellness dashboard\n\nDiscounts available for advance payments!"
+        },
+        'workout': {
+            keywords: ['workout', 'exercise', 'training', 'routine', 'beginner'],
+            answer: "For beginners, I recommend:\n\n1️⃣ Start with compound movements (squats, push-ups, rows)\n2️⃣ Train 3-4 days per week\n3️⃣ Focus on proper form before adding weight\n4️⃣ Include: Upper body (chest, back, shoulders), Lower body (legs, glutes), and Core work\n5️⃣ Progressive overload - gradually increase difficulty\n\nOur L2 and L3 memberships include AI-generated personalized workout plans!"
+        },
+        'muscle': {
+            keywords: ['muscle', 'gain', 'bulk', 'grow', 'build', 'mass'],
+            answer: "To build muscle effectively:\n\n💪 Training: 8-12 reps per set, 3-4 sets, progressive overload\n🍖 Nutrition: 1.6-2.2g protein per kg body weight daily\n😴 Recovery: 7-9 hours sleep, 48hrs rest between muscle groups\n📈 Consistency: Train each muscle 2x per week minimum\n💧 Hydration: Drink 3-4 liters of water daily\n\nOur trainers and nutrition hub can create custom muscle-building programs for you!"
+        },
+        'weight': {
+            keywords: ['weight loss', 'lose weight', 'fat', 'burn', 'slim', 'diet'],
+            answer: "For effective weight loss:\n\n🔥 Caloric deficit: Consume 300-500 calories below maintenance\n🏃 Cardio: 150+ minutes moderate or 75+ vigorous per week\n💪 Strength training: Maintains muscle while losing fat\n🥗 Nutrition: High protein, lots of vegetables, limit processed foods\n📊 Track progress: Weekly measurements, not just scale weight\n\nOur L2 tier includes nutrition recommendations and activity tracking!"
+        },
+        'trainer': {
+            keywords: ['trainer', 'coach', 'personal', 'instructor'],
+            answer: "Our certified trainers specialize in:\n\n🏋️ Strength & Conditioning\n🧘 Yoga & Flexibility\n🥊 Martial Arts\n🎯 Sports-specific training\n📊 Personalized programming\n\nPersonal trainer booking is available as an L3 add-on for ₹1,000/month. You can select from our experienced trainers with various specializations!"
+        },
+        'nutrition': {
+            keywords: ['nutrition', 'diet', 'meal', 'protein', 'food', 'eat'],
+            answer: "Nutrition fundamentals:\n\n🍗 Protein: 1.6-2.2g per kg body weight\n🍚 Carbs: Primary energy source, especially pre-workout\n🥑 Fats: 0.8-1g per kg for hormone production\n🥗 Vegetables: 5+ servings daily for micronutrients\n💧 Water: 3-4 liters daily\n\nL2 includes nutrition recommendations. L3 Premium Nutrition Hub offers meal plans and protein shakes!"
+        },
+        'default': {
+            keywords: [],
+            answer: "I can help with:\n\n✅ Membership options and pricing\n✅ Workout and training advice\n✅ Nutrition guidance\n✅ Muscle building tips\n✅ Weight loss strategies\n✅ Trainer information\n\nTry asking about specific topics like 'best membership for me' or 'how to build muscle'!"
+        }
+    };
+    
+    // Send message function
+    function sendMessage() {
+        const message = chatbotInput.value.trim();
+        if (!message) return;
+        
+        // Add user message
+        addMessage(message, 'user');
+        chatbotInput.value = '';
+        
+        // Get AI response
+        setTimeout(() => {
+            const response = getAIResponse(message);
+            addMessage(response, 'bot');
+        }, 500);
+    }
+    
+    // Add message to chat
+    function addMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message message-${sender}`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = `message-avatar avatar-${sender}`;
+        avatar.innerHTML = sender === 'bot' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
+        
+        const bubble = document.createElement('div');
+        bubble.className = `message-bubble bubble-${sender}`;
+        bubble.innerHTML = text.replace(/\n/g, '<br>');
+        
+        if (sender === 'user') {
+            messageDiv.appendChild(bubble);
+            messageDiv.appendChild(avatar);
+        } else {
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(bubble);
+        }
+        
+        chatbotMessages.appendChild(messageDiv);
+        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+    }
+    
+    // Get AI response
+    function getAIResponse(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        for (let category in responses) {
+            const keywords = responses[category].keywords;
+            if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+                return responses[category].answer;
+            }
+        }
+        
+        return responses.default.answer;
+    }
+    
+    // Quick question function
+    function sendQuickQuestion(question) {
+        addMessage(question, 'user');
+        setTimeout(() => {
+            const response = getAIResponse(question);
+            addMessage(response, 'bot');
+        }, 500);
+    }
+    
+    // Event listeners
+    chatbotSend.addEventListener('click', sendMessage);
+    chatbotInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+</script>
+{% endblock %}

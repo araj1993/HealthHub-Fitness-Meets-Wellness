@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Workout Progress - HealthHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .stats-value {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #10b981;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .progress-circle {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="chart-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">
+                    <i class="fas fa-chart-line me-3"></i> Workout Progress Analytics
+                </h1>
+                <p class="mb-0 opacity-75">
+                    {% if is_admin_viewing %}
+                        Viewing progress for {{ target_user.full_name }}
+                    {% else %}
+                        Track your fitness journey
+                    {% endif %}
+                </p>
+            </div>
+            <a href="{% if is_admin_viewing %}{% url 'admin_manage_user_data' target_user.id %}{% else %}{% url 'user_dashboard' %}{% endif %}" class="btn btn-light btn-lg">
+                <i class="fas fa-arrow-left me-2"></i> Back
+            </a>
+        </div>
+    </div>
+    
+    <!-- Overall Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card">
+                <i class="fas fa-dumbbell fa-3x text-success mb-3"></i>
+                <h3 class="text-muted mb-2">Total Exercises</h3>
+                <div class="stats-value">{{ total_exercises }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h3 class="text-muted mb-2">Completed</h3>
+                <div class="stats-value">{{ completed_exercises }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <i class="fas fa-chart-pie fa-3x text-success mb-3"></i>
+                <h3 class="text-muted mb-2">Completion Rate</h3>
+                <div class="stats-value">{{ overall_completion_rate }}%</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Weekly Progress Chart -->
+    <div class="chart-container">
+        <h3 class="mb-4"><i class="fas fa-calendar-week me-2 text-success"></i> Weekly Completion Progress</h3>
+        <canvas id="weeklyChart" height="80"></canvas>
+    </div>
+    
+    <!-- Day of Week Chart -->
+    <div class="chart-container">
+        <h3 class="mb-4"><i class="fas fa-calendar-day me-2 text-success"></i> Completion by Day of Week</h3>
+        <canvas id="dayChart" height="80"></canvas>
+    </div>
+    
+    <!-- Weekly Details Table -->
+    <div class="chart-container">
+        <h3 class="mb-4"><i class="fas fa-table me-2 text-success"></i> Weekly Breakdown</h3>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-success">
+                    <tr>
+                        <th>Week</th>
+                        <th>Period</th>
+                        <th>Total Exercises</th>
+                        <th>Completed</th>
+                        <th>Remaining</th>
+                        <th>Completion Rate</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week, stats in weekly_stats.items %}
+                    <tr>
+                        <td><strong>Week {{ week }}</strong></td>
+                        <td>{{ stats.start_date|date:"M d" }} - {{ stats.end_date|date:"M d, Y" }}</td>
+                        <td>{{ stats.total_exercises }}</td>
+                        <td><span class="badge bg-success">{{ stats.completed_exercises }}</span></td>
+                        <td><span class="badge bg-secondary">{{ stats.total_exercises|add:"-"|add:stats.completed_exercises }}</span></td>
+                        <td><strong>{{ stats.completion_rate }}%</strong></td>
+                        <td>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ stats.completion_rate }}%"
+                                     aria-valuenow="{{ stats.completion_rate }}" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    {{ stats.completion_rate }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No workout data available yet</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Weekly Progress Chart
+const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+const weeklyData = {
+    labels: [{% for week in weekly_stats.keys %}'Week {{ week }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+    datasets: [{
+        label: 'Completion Rate (%)',
+        data: [{% for stats in weekly_stats.values %}{{ stats.completion_rate }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+        borderColor: 'rgba(16, 185, 129, 1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
+    }]
+};
+
+new Chart(weeklyCtx, {
+    type: 'line',
+    data: weeklyData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'Completion: ' + context.parsed.y + '%';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Day of Week Chart
+const dayCtx = document.getElementById('dayChart').getContext('2d');
+const dayData = {
+    labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    datasets: [{
+        label: 'Completed Exercises',
+        data: [
+            {{ day_stats.MON.completed }},
+            {{ day_stats.TUE.completed }},
+            {{ day_stats.WED.completed }},
+            {{ day_stats.THU.completed }},
+            {{ day_stats.FRI.completed }},
+            {{ day_stats.SAT.completed }}
+        ],
+        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+        borderColor: 'rgba(16, 185, 129, 1)',
+        borderWidth: 1
+    }, {
+        label: 'Total Exercises',
+        data: [
+            {{ day_stats.MON.total }},
+            {{ day_stats.TUE.total }},
+            {{ day_stats.WED.total }},
+            {{ day_stats.THU.total }},
+            {{ day_stats.FRI.total }},
+            {{ day_stats.SAT.total }}
+        ],
+        backgroundColor: 'rgba(229, 231, 235, 0.8)',
+        borderColor: 'rgba(156, 163, 175, 1)',
+        borderWidth: 1
+    }]
+};
+
+new Chart(dayCtx, {
+    type: 'bar',
+    data: dayData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    footer: function(tooltipItems) {
+                        const index = tooltipItems[0].dataIndex;
+                        const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+                        const dayKey = days[index];
+                        const stats = {
+                            'MON': {{ day_stats.MON.completion_rate }},
+                            'TUE': {{ day_stats.TUE.completion_rate }},
+                            'WED': {{ day_stats.WED.completion_rate }},
+                            'THU': {{ day_stats.THU.completion_rate }},
+                            'FRI': {{ day_stats.FRI.completion_rate }},
+                            'SAT': {{ day_stats.SAT.completion_rate }}
+                        };
+                        return 'Completion Rate: ' + stats[dayKey] + '%';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

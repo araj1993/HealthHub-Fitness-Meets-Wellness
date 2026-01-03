@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Registration - HealthHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0"><i class="fas fa-user-shield"></i> {{ role_title }}</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Common Questions Section -->
+                    <h4 class="mb-3 text-primary">
+                        <i class="fas fa-clipboard-list"></i> Common Information (Required for All)
+                    </h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Full Name *</label>
+                            {{ common_form.full_name }}
+                            {% if common_form.full_name.errors %}
+                                <div class="text-danger">{{ common_form.full_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            {{ common_form.email }}
+                            {% if common_form.email.errors %}
+                                <div class="text-danger">{{ common_form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number *</label>
+                            {{ common_form.phone_number }}
+                            {% if common_form.phone_number.errors %}
+                                <div class="text-danger">{{ common_form.phone_number.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username *</label>
+                            {{ common_form.username }}
+                            {% if common_form.username.errors %}
+                                <div class="text-danger">{{ common_form.username.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Password *</label>
+                            {{ common_form.password1 }}
+                            {% if common_form.password1.errors %}
+                                <div class="text-danger">{{ common_form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Confirm Password *</label>
+                            {{ common_form.password2 }}
+                            {% if common_form.password2.errors %}
+                                <div class="text-danger">{{ common_form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Profile Photo (Optional)</label>
+                        {{ common_form.profile_photo }}
+                        {% if common_form.profile_photo.errors %}
+                            <div class="text-danger">{{ common_form.profile_photo.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Admin Specific Section -->
+                    <h4 class="mb-3 text-secondary">
+                        <i class="fas fa-user-cog"></i> Admin-Specific Information
+                    </h4>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Qualification *</label>
+                        {{ admin_form.qualification }}
+                        {% if admin_form.qualification.errors %}
+                            <div class="text-danger">{{ admin_form.qualification.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <input type="text" class="form-control" value="Admin" readonly>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Security PIN (Optional)</label>
+                        {{ admin_form.security_pin }}
+                        <small class="form-text text-muted">6-digit PIN for additional security</small>
+                        {% if admin_form.security_pin.errors %}
+                            <div class="text-danger">{{ admin_form.security_pin.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-check-circle"></i> Complete Admin Registration
+                        </button>
+                        <a href="{% url 'home' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Trainer Registration - HealthHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h3 class="mb-0"><i class="fas fa-person-running"></i> {{ role_title }}</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if common_form.errors or trainer_form.errors %}
+                    <div class="alert alert-danger">
+                        <h5>Please correct the following errors:</h5>
+                        {{ common_form.errors }}
+                        {{ trainer_form.errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Common Questions Section -->
+                    <h4 class="mb-3 text-primary">
+                        <i class="fas fa-clipboard-list"></i> Common Information (Required for All)
+                    </h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Full Name *</label>
+                            {{ common_form.full_name }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            {{ common_form.email }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number *</label>
+                            {{ common_form.phone_number }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username *</label>
+                            {{ common_form.username }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Password *</label>
+                            {{ common_form.password1 }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Confirm Password *</label>
+                            {{ common_form.password2 }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Profile Photo (Optional)</label>
+                        {{ common_form.profile_photo }}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Trainer Specific Section -->
+                    <h4 class="mb-3 text-warning">
+                        <i class="fas fa-dumbbell"></i> Trainer-Specific Information
+                    </h4>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Qualification *</label>
+                        {{ trainer_form.qualification }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Specialization *</label>
+                            {{ trainer_form.specialization }}
+                            <small class="form-text text-muted">e.g., Fitness, Yoga, Strength, etc.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Experience (Years) *</label>
+                            {{ trainer_form.experience_years }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Certification Details *</label>
+                        {{ trainer_form.certification_details }}
+                        <small class="form-text text-muted">List all your professional certifications</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Professional Licenses (Optional)</label>
+                        {{ trainer_form.licenses }}
+                        <small class="form-text text-muted">List any professional licenses you hold</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Accreditations (Optional)</label>
+                        {{ trainer_form.accreditations }}
+                        <small class="form-text text-muted">List any professional accreditations</small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Your trainer application will be reviewed by an administrator. You will receive an email once your account is approved or if additional information is needed.
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg text-white">
+                            <i class="fas fa-paper-plane"></i> Submit Trainer Application
+                        </button>
+                        <a href="{% url 'home' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

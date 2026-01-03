@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+
+{% block title %}User Registration - HealthHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tier-card {
+        border: 3px solid transparent;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .tier-card:hover {
+        transform: scale(1.02);
+    }
+    .tier-card.selected {
+        border-color: #667eea !important;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    }
+    .addon-item {
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    .addon-item:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    .fee-summary {
+        position: sticky;
+        top: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+    }
+    .hidden {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0"><i class="fas fa-dumbbell"></i> {{ role_title }}</h3>
+            </div>
+            <div class="card-body">
+                {% if common_form.errors or membership_form.errors or addon_form.errors %}
+                <div class="alert alert-danger">
+                    <h5>Please correct the following errors:</h5>
+                    {{ common_form.errors }}
+                    {{ membership_form.errors }}
+                    {{ addon_form.errors }}
+                </div>
+                {% endif %}
+                
+                <form method="post" enctype="multipart/form-data" id="registrationForm">
+                    {% csrf_token %}
+                    
+                    <!-- Common Questions Section -->
+                    <h4 class="mb-3 text-primary">
+                        <i class="fas fa-clipboard-list"></i> Common Information
+                    </h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Full Name *</label>
+                            {{ common_form.full_name }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            {{ common_form.email }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number *</label>
+                            {{ common_form.phone_number }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username *</label>
+                            {{ common_form.username }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Password *</label>
+                            {{ common_form.password1 }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Confirm Password *</label>
+                            {{ common_form.password2 }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Profile Photo (Optional)</label>
+                        {{ common_form.profile_photo }}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Membership Tier Selection -->
+                    <h4 class="mb-3 text-success">
+                        <i class="fas fa-trophy"></i> Select Your Membership Tier
+                    </h4>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card tier-card border-info" data-tier="L1">
+                                <div class="card-body text-center">
+                                    <input type="radio" name="membership_tier" value="L1" class="form-check-input d-none" id="tier_l1" required>
+                                    <label for="tier_l1" class="w-100" style="cursor: pointer;">
+                                        <h5 class="text-info">L1 - FitStarter</h5>
+                                        <p class="text-muted small">Basic gym access and equipment</p>
+                                        <h4 class="text-primary">₹1,500<small>/month</small></h4>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card tier-card border-warning" data-tier="L2">
+                                <div class="card-body text-center">
+                                    <input type="radio" name="membership_tier" value="L2" class="form-check-input d-none" id="tier_l2">
+                                    <label for="tier_l2" class="w-100" style="cursor: pointer;">
+                                        <h5 class="text-warning">L2 - ProActive</h5>
+                                        <p class="text-muted small">L1 + AI features + nutrition</p>
+                                        <h4 class="text-primary">₹2,500<small>/month</small></h4>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card tier-card border-danger" data-tier="L3">
+                                <div class="card-body text-center">
+                                    <input type="radio" name="membership_tier" value="L3" class="form-check-input d-none" id="tier_l3">
+                                    <label for="tier_l3" class="w-100" style="cursor: pointer;">
+                                        <h5 class="text-danger">L3 - EliteChamp</h5>
+                                        <p class="text-muted small">All features + premium add-ons</p>
+                                        <h4 class="text-primary">₹2,500<small>/month</small> + Add-ons</h4>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- User Health Information -->
+                    <h4 class="mb-3 text-secondary">
+                        <i class="fas fa-heartbeat"></i> Health Information
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Age *</label>
+                            {{ membership_form.age }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Current Weight (kg) *</label>
+                            {{ membership_form.current_weight }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Date of Joining *</label>
+                            {{ membership_form.date_of_joining }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Medical History (if any)</label>
+                        {{ membership_form.medical_history }}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Payment Options -->
+                    <h4 class="mb-3 text-info">
+                        <i class="fas fa-credit-card"></i> Payment Options
+                    </h4>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ membership_form.pay_monthly_in_advance }}
+                            <label class="form-check-label" for="{{ membership_form.pay_monthly_in_advance.id_for_label }}">
+                                Pay monthly fee in advance? (Get ₹200 discount per month after 2 months)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4" id="monthsSection" style="display: none;">
+                        <label class="form-label">Select Number of Months *</label>
+                        {{ membership_form.months_selected }}
+                        <small class="form-text text-muted">
+                            Pay for more than 2 months and get ₹200 discount per extra month!
+                        </small>
+                    </div>
+                    
+                    <!-- L2 Specific -->
+                    <div id="l2Section" class="hidden">
+                        <hr class="my-4">
+                        <h4 class="mb-3 text-warning">
+                            <i class="fas fa-flask"></i> L2 ProActive Features
+                        </h4>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item"><i class="fas fa-check text-success"></i> AI Workout Planner</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success"></i> Nutrition Recommendations</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success"></i> Weekly Performance Insights</li>
+                            <li class="list-group-item"><i class="fas fa-check text-success"></i> Stress & Activity Analysis</li>
+                        </ul>
+                        <div class="form-check mb-3">
+                            {{ membership_form.extra_protein_needed }}
+                            <label class="form-check-label" for="{{ membership_form.extra_protein_needed.id_for_label }}">
+                                Is extra protein supplementation needed?
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- L3 Specific -->
+                    <div id="l3Section" class="hidden">
+                        <hr class="my-4">
+                        <h4 class="mb-3 text-danger">
+                            <i class="fas fa-crown"></i> L3 EliteChamp Add-ons
+                        </h4>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-star"></i> <strong>Bonus:</strong> Daily protein shake (40g) in your favorite flavor is available!
+                        </div>
+                        
+                        <p class="text-muted mb-3">Select additional features (₹1,000 each):</p>
+                        
+                        <div class="addon-item">
+                            <div class="form-check">
+                                {{ addon_form.personal_trainer }}
+                                <label class="form-check-label" for="{{ addon_form.personal_trainer.id_for_label }}">
+                                    <strong>Personal Trainer Booking</strong> (₹1,000)
+                                    <br><small class="text-muted">One-on-one training sessions with certified trainers</small>
+                                </label>
+                            </div>
+                            
+                            <!-- Trainer Selection Dropdown (shown when personal_trainer is checked) -->
+                            <div id="trainerSelectionDiv" class="mt-3 ms-4 hidden">
+                                <label for="{{ addon_form.selected_trainer.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user-tie"></i> {{ addon_form.selected_trainer.label }}
+                                </label>
+                                {{ addon_form.selected_trainer }}
+                                <div class="form-text">Choose from our experienced certified trainers</div>
+                            </div>
+                        </div>
+                        
+                        <div class="addon-item">
+                            <div class="form-check">
+                                {{ addon_form.zumba_martial_arts }}
+                                <label class="form-check-label" for="{{ addon_form.zumba_martial_arts.id_for_label }}">
+                                    <strong>Zumba & Martial Arts (Live/Recorded)</strong> (₹1,000)
+                                    <br><small class="text-muted">Access to live and recorded classes</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="addon-item">
+                            <div class="form-check">
+                                {{ addon_form.premium_nutrition }}
+                                <label class="form-check-label" for="{{ addon_form.premium_nutrition.id_for_label }}">
+                                    <strong>Premium Nutrition Hub (drinks + meals)</strong> (₹1,000)
+                                    <br><small class="text-muted">Access to premium nutrition and meal plans</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="addon-item">
+                            <div class="form-check">
+                                {{ addon_form.mental_wellness }}
+                                <label class="form-check-label" for="{{ addon_form.mental_wellness.id_for_label }}">
+                                    <strong>Mental Wellness Dashboard</strong> (₹1,000)
+                                    <br><small class="text-muted">Mental health tracking and meditation guides</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check-circle"></i> Complete Registration & Generate Receipt
+                        </button>
+                        <a href="{% url 'home' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Fee Summary Sidebar -->
+    <div class="col-md-4">
+        <div class="fee-summary">
+            <h4 class="mb-3"><i class="fas fa-calculator"></i> Fee Summary</h4>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between">
+                    <span>Base Registration:</span>
+                    <strong id="baseFee">₹2,000</strong>
+                </div>
+            </div>
+            <div class="mb-3" id="monthlyFeeRow" style="display: none;">
+                <div class="d-flex justify-content-between">
+                    <span>Monthly Fee:</span>
+                    <strong id="monthlyFee">₹0</strong>
+                </div>
+            </div>
+            <div class="mb-3" id="discountRow" style="display: none;">
+                <div class="d-flex justify-content-between text-success">
+                    <span>Discount:</span>
+                    <strong id="discount">- ₹0</strong>
+                </div>
+            </div>
+            <div class="mb-3" id="addonFeeRow" style="display: none;">
+                <div class="d-flex justify-content-between">
+                    <span>Add-ons:</span>
+                    <strong id="addonFee">₹0</strong>
+                </div>
+            </div>
+            <hr class="bg-white">
+            <div class="d-flex justify-content-between">
+                <h5>Total Amount:</h5>
+                <h4 id="totalFee">₹2,000</h4>
+            </div>
+            <small class="text-white-50 mt-2 d-block">
+                <i class="fas fa-info-circle"></i> PDF receipt will be generated after registration
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let selectedTier = 'L1';
+    
+    // Tier selection
+    $('.tier-card').click(function() {
+        $('.tier-card').removeClass('selected');
+        $(this).addClass('selected');
+        $(this).find('input[type="radio"]').prop('checked', true);
+        selectedTier = $(this).data('tier');
+        
+        // Show/hide tier-specific sections
+        if (selectedTier === 'L2') {
+            $('#l2Section').removeClass('hidden');
+            $('#l3Section').addClass('hidden');
+        } else if (selectedTier === 'L3') {
+            $('#l2Section').addClass('hidden');
+            $('#l3Section').removeClass('hidden');
+        } else {
+            $('#l2Section').addClass('hidden');
+            $('#l3Section').addClass('hidden');
+        }
+        
+        calculateFee();
+    });
+    
+    // Monthly payment checkbox
+    $('#{{ membership_form.pay_monthly_in_advance.id_for_label }}').change(function() {
+        if ($(this).is(':checked')) {
+            $('#monthsSection').slideDown();
+        } else {
+            $('#monthsSection').slideUp();
+        }
+        calculateFee();
+    });
+    
+    // Months selection
+    $('#{{ membership_form.months_selected.id_for_label }}').on('input', calculateFee);
+    
+    // L3 addon checkboxes
+    $('#l3Section input[type="checkbox"]').change(calculateFee);
+    
+    // Personal Trainer checkbox - show/hide trainer dropdown
+    $('#id_personal_trainer').change(function() {
+        if ($(this).is(':checked')) {
+            $('#trainerSelectionDiv').removeClass('hidden').slideDown();
+        } else {
+            $('#trainerSelectionDiv').slideUp(function() {
+                $(this).addClass('hidden');
+            });
+            $('#id_selected_trainer').val('');
+        }
+    });
+    
+    function calculateFee() {
+        let baseFee = 2000;
+        let monthlyRate = selectedTier === 'L1' ? 1500 : 2500;
+        let monthlyTotal = 0;
+        let discount = 0;
+        let addonTotal = 0;
+        
+        // Calculate monthly fee
+        if ($('#{{ membership_form.pay_monthly_in_advance.id_for_label }}').is(':checked')) {
+            let months = parseInt($('#{{ membership_form.months_selected.id_for_label }}').val()) || 0;
+            if (months > 0) {
+                monthlyTotal = monthlyRate * months;
+                $('#monthlyFeeRow').show();
+                $('#monthlyFee').text('₹' + (monthlyRate * months).toLocaleString());
+                
+                // Apply discount for months > 2
+                if (months > 2) {
+                    discount = 200 * (months - 2);
+                    monthlyTotal -= discount;
+                    $('#discountRow').show();
+                    $('#discount').text('- ₹' + discount.toLocaleString());
+                } else {
+                    $('#discountRow').hide();
+                }
+            }
+        } else {
+            $('#monthlyFeeRow').hide();
+            $('#discountRow').hide();
+        }
+        
+        // Calculate L3 addons
+        if (selectedTier === 'L3') {
+            $('#l3Section input[type="checkbox"]:checked').each(function() {
+                addonTotal += 1000;
+            });
+            if (addonTotal > 0) {
+                $('#addonFeeRow').show();
+                $('#addonFee').text('₹' + addonTotal.toLocaleString());
+            } else {
+                $('#addonFeeRow').hide();
+            }
+        } else {
+            $('#addonFeeRow').hide();
+        }
+        
+        let total = baseFee + monthlyTotal + addonTotal;
+        $('#totalFee').text('₹' + total.toLocaleString());
+    }
+    
+    // Initialize
+    calculateFee();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Workout Plan - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+    
+    .workout-form-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .day-section {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        background: #f9fafb;
+    }
+    
+    .exercise-row {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        border-left: 4px solid #10b981;
+    }
+    
+    .ai-suggestion {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="admin-header">
+        <h1><i class="fas fa-dumbbell me-3"></i> Create Weekly Workout Plan</h1>
+        <p class="mb-0 opacity-75">For {{ managed_user.full_name }} - L2 ProActive Member</p>
+    </div>
+    
+    <div class="ai-suggestion">
+        <h4 class="mb-3"><i class="fas fa-robot me-2"></i> AI-Generated Workout Plan Template</h4>
+        <p class="mb-2">
+            <i class="fas fa-lightbulb me-2"></i> 
+            <strong>Recommended weekly structure for L2 members:</strong>
+        </p>
+        <ul class="mb-0">
+            <li><strong>Monday:</strong> Upper Body Strength (Chest, Shoulders, Triceps)</li>
+            <li><strong>Tuesday:</strong> Lower Body Strength (Quads, Hamstrings, Glutes)</li>
+            <li><strong>Wednesday:</strong> Cardio & Core (HIIT, Abs, Planks)</li>
+            <li><strong>Thursday:</strong> Upper Body Strength (Back, Biceps)</li>
+            <li><strong>Friday:</strong> Lower Body & Flexibility (Legs, Yoga, Stretching)</li>
+            <li><strong>Saturday:</strong> Full Body HIIT & Conditioning</li>
+        </ul>
+    </div>
+    
+    <form method="POST" id="workoutPlanForm">
+        {% csrf_token %}
+        
+        <div class="workout-form-card">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Week Number</label>
+                    <input type="number" class="form-control" name="week_number" value="1" min="1" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Start Date (Monday)</label>
+                    <input type="date" class="form-control" name="start_date" required>
+                </div>
+            </div>
+            
+            <!-- Monday -->
+            <div class="day-section">
+                <h4 class="text-success mb-3"><i class="fas fa-calendar-day me-2"></i> Monday</h4>
+                <div id="MON_exercises">
+                    <div class="exercise-row">
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label small">Exercise Name</label>
+                                <input type="text" class="form-control" name="MON_exercise_0_name" placeholder="e.g., Bench Press" required>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label small">Type</label>
+                                <select class="form-select" name="MON_exercise_0_type" required>
+                                    <option value="STRENGTH">Strength Training</option>
+                                    <option value="CARDIO">Cardio</option>
+                                    <option value="HIIT">HIIT</option>
+                                    <option value="FLEXIBILITY">Flexibility</option>
+                                    <option value="YOGA">Yoga</option>
+                                    <option value="CORE">Core Training</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label class="form-label small">Sets</label>
+                                <input type="number" class="form-control" name="MON_exercise_0_sets" value="3" min="1">
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label class="form-label small">Reps</label>
+                                <input type="number" class="form-control" name="MON_exercise_0_reps" value="10" min="1">
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label class="form-label small">&nbsp;</label>
+                                <button type="button" class="btn btn-danger btn-sm w-100" onclick="removeExercise(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small">Description (Optional)</label>
+                                <input type="text" class="form-control" name="MON_exercise_0_description" placeholder="Instructions...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-success btn-sm" onclick="addExercise('MON')">
+                    <i class="fas fa-plus me-2"></i> Add Exercise
+                </button>
+                <input type="hidden" name="MON_exercise_count" id="MON_exercise_count" value="1">
+            </div>
+            
+            <!-- Tuesday -->
+            <div class="day-section">
+                <h4 class="text-success mb-3"><i class="fas fa-calendar-day me-2"></i> Tuesday</h4>
+                <div id="TUE_exercises">
+                    <div class="exercise-row">
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label small">Exercise Name</label>
+                                <input type="text" class="form-control" name="TUE_exercise_0_name" placeholder="e.g., Squats">
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <label class="form-label small">Type</label>
+                                <select class="form-select" name="TUE_exercise_0_type">
+                                    <option value="STRENGTH">Strength Training</option>
+                                    <option value="CARDIO">Cardio</option>
+                                    <option value="HIIT">HIIT</option>
+                                    <option value="FLEXIBILITY">Flexibility</option>
+                                    <option value="YOGA">Yoga</option>
+                                    <option value="CORE">Core Training</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label class="form-label small">Sets</label>
+                                <input type="number" class="form-control" name="TUE_exercise_0_sets" value="3" min="1">
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label class="form-label small">Reps</label>
+                                <input type="number" class="form-control" name="TUE_exercise_0_reps" value="10" min="1">
+                            </div>
+                            <div class="col-md-2 mb-2">
+                                <label class="form-label small">&nbsp;</label>
+                                <button type="button" class="btn btn-danger btn-sm w-100" onclick="removeExercise(this)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small">Description (Optional)</label>
+                                <input type="text" class="form-control" name="TUE_exercise_0_description" placeholder="Instructions...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-success btn-sm" onclick="addExercise('TUE')">
+                    <i class="fas fa-plus me-2"></i> Add Exercise
+                </button>
+                <input type="hidden" name="TUE_exercise_count" id="TUE_exercise_count" value="1">
+            </div>
+            
+            <!-- Continue for other days: Wednesday, Thursday, Friday, Saturday -->
+            <!-- Wednesday -->
+            <div class="day-section">
+                <h4 class="text-success mb-3"><i class="fas fa-calendar-day me-2"></i> Wednesday</h4>
+                <div id="WED_exercises">
+                </div>
+                <button type="button" class="btn btn-success btn-sm" onclick="addExercise('WED')">
+                    <i class="fas fa-plus me-2"></i> Add Exercise
+                </button>
+                <input type="hidden" name="WED_exercise_count" id="WED_exercise_count" value="0">
+            </div>
+            
+            <!-- Thursday -->
+            <div class="day-section">
+                <h4 class="text-success mb-3"><i class="fas fa-calendar-day me-2"></i> Thursday</h4>
+                <div id="THU_exercises">
+                </div>
+                <button type="button" class="btn btn-success btn-sm" onclick="addExercise('THU')">
+                    <i class="fas fa-plus me-2"></i> Add Exercise
+                </button>
+                <input type="hidden" name="THU_exercise_count" id="THU_exercise_count" value="0">
+            </div>
+            
+            <!-- Friday -->
+            <div class="day-section">
+                <h4 class="text-success mb-3"><i class="fas fa-calendar-day me-2"></i> Friday</h4>
+                <div id="FRI_exercises">
+                </div>
+                <button type="button" class="btn btn-success btn-sm" onclick="addExercise('FRI')">
+                    <i class="fas fa-plus me-2"></i> Add Exercise
+                </button>
+                <input type="hidden" name="FRI_exercise_count" id="FRI_exercise_count" value="0">
+            </div>
+            
+            <!-- Saturday -->
+            <div class="day-section">
+                <h4 class="text-success mb-3"><i class="fas fa-calendar-day me-2"></i> Saturday</h4>
+                <div id="SAT_exercises">
+                </div>
+                <button type="button" class="btn btn-success btn-sm" onclick="addExercise('SAT')">
+                    <i class="fas fa-plus me-2"></i> Add Exercise
+                </button>
+                <input type="hidden" name="SAT_exercise_count" id="SAT_exercise_count" value="0">
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'admin_manage_user_data' managed_user.id %}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save me-2"></i> Create Workout Plan
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Add exercise functionality
+function addExercise(day) {
+    const countInput = document.getElementById(day + '_exercise_count');
+    const count = parseInt(countInput.value);
+    const container = document.getElementById(day + '_exercises');
+    
+    const exerciseHTML = `
+        <div class="exercise-row">
+            <div class="row">
+                <div class="col-md-3 mb-2">
+                    <label class="form-label small">Exercise Name</label>
+                    <input type="text" class="form-control" name="${day}_exercise_${count}_name" placeholder="e.g., Push-ups">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label small">Type</label>
+                    <select class="form-select" name="${day}_exercise_${count}_type">
+                        <option value="STRENGTH">Strength Training</option>
+                        <option value="CARDIO">Cardio</option>
+                        <option value="HIIT">HIIT</option>
+                        <option value="FLEXIBILITY">Flexibility</option>
+                        <option value="YOGA">Yoga</option>
+                        <option value="CORE">Core Training</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label small">Sets</label>
+                    <input type="number" class="form-control" name="${day}_exercise_${count}_sets" value="3" min="1">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label small">Reps</label>
+                    <input type="number" class="form-control" name="${day}_exercise_${count}_reps" value="10" min="1">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label small">&nbsp;</label>
+                    <button type="button" class="btn btn-danger btn-sm w-100" onclick="removeExercise(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="col-12">
+                    <label class="form-label small">Description (Optional)</label>
+                    <input type="text" class="form-control" name="${day}_exercise_${count}_description" placeholder="Instructions...">
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', exerciseHTML);
+    countInput.value = count + 1;
+}
+
+function removeExercise(button) {
+    const exerciseRow = button.closest('.exercise-row');
+    exerciseRow.remove();
+}
+
+// Initialize Wednesday through Saturday with at least one exercise form
+document.addEventListener('DOMContentLoaded', function() {
+    const days = ['WED', 'THU', 'FRI', 'SAT'];
+    days.forEach(day => {
+        addExercise(day);
+    });
+});
+</script>
+{% endblock %}

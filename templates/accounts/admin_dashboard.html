@@ -1,0 +1,1211 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - HealthHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Force everything to be clickable - override all base.html styles */
+    * {
+        pointer-events: auto !important;
+    }
+    
+    /* Ensure modals and their contents are always interactive */
+    .modal,
+    .modal *,
+    .modal-backdrop,
+    .modal-dialog,
+    .modal-content,
+    .modal-header,
+    .modal-body,
+    .modal-footer,
+    button,
+    input,
+    textarea,
+    select,
+    a,
+    .btn,
+    .card,
+    .card-body,
+    .card-header {
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+    
+    /* Specific override for Bootstrap modal backdrop */
+    .modal-backdrop {
+        pointer-events: none !important;
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .user-table {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 1;
+    }
+    
+    .role-badge {
+        padding: 6px 12px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    /* User Tabs Styling */
+    .nav-tabs .nav-link {
+        color: #374151;
+        font-weight: 600;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 1rem 1.5rem;
+        transition: all 0.3s;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        border-bottom-color: #3b82f6;
+        background-color: #f3f4f6;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #3b82f6;
+        border-bottom-color: #3b82f6;
+        background: transparent;
+    }
+    
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f9fafb;
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    /* Ensure modals work */
+    .modal {
+        z-index: 9999 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 9998 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">
+                    <i class="fas fa-user-shield me-3"></i> Admin Dashboard
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Welcome, {{ request.user.full_name }}
+                </p>
+            </div>
+            <a href="{% url 'logout' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </a>
+        </div>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon text-primary">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value text-primary">{{ total_users }}</div>
+                <div class="text-muted">Total Members</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon text-warning">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="stat-value text-warning">{{ total_trainers }}</div>
+                <div class="text-muted">Active Trainers</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon text-success">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="stat-value text-success">{{ total_admins }}</div>
+                <div class="text-muted">Administrators</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-value text-danger">{{ expiring_soon_count }}</div>
+                <div class="text-muted">Expiring Within 7 Days</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+                <div class="stat-icon text-info">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="stat-value text-info">{{ pending_payments_count }}</div>
+                <div class="text-muted">Pending Payments</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending Payments Alert -->
+    {% if pending_payments_count > 0 %}
+    <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+        <h5 class="alert-heading">
+            <i class="fas fa-money-bill-wave me-2"></i> Pending Payment Confirmations
+        </h5>
+        <p class="mb-0">
+            <strong>{{ pending_payments_count }}</strong> payment{{ pending_payments_count|pluralize }} pending your confirmation. 
+            Check the Members tab below to confirm or cancel payments.
+        </p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <!-- Expiring Memberships Alert -->
+    {% if expiring_soon_count > 0 %}
+    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+        <h5 class="alert-heading">
+            <i class="fas fa-exclamation-triangle me-2"></i> Memberships Expiring Soon
+        </h5>
+        <p class="mb-0">
+            <strong>{{ expiring_soon_count }}</strong> membership{{ expiring_soon_count|pluralize }} will expire within the next 7 days. 
+            Check the Active Memberships section below for details.
+        </p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <!-- Pending Trainers Alert -->
+    {% if pending_trainers_count > 0 %}
+    <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+        <h5 class="alert-heading">
+            <i class="fas fa-user-clock me-2"></i> Pending Trainer Approvals
+        </h5>
+        <p class="mb-0">
+            <strong>{{ pending_trainers_count }}</strong> trainer application{{ pending_trainers_count|pluralize }} pending your review. 
+            Check the Pending Trainers tab below to approve or reject applications.
+        </p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <!-- All Users Section with Tabs -->
+    <div class="user-table">
+        <h3 class="mb-4">
+            <i class="fas fa-users me-2"></i> User Management
+        </h3>
+        
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs mb-3" id="userTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="members-tab" data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab">
+                    <i class="fas fa-user me-2"></i> Members ({{ total_users }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="trainers-tab" data-bs-toggle="tab" data-bs-target="#trainers" type="button" role="tab">
+                    <i class="fas fa-user-tie me-2"></i> Trainers ({{ total_trainers }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if pending_trainers_count > 0 %}text-danger fw-bold{% endif %}" id="pending-trainers-tab" data-bs-toggle="tab" data-bs-target="#pending-trainers" type="button" role="tab">
+                    <i class="fas fa-user-clock me-2"></i> Pending Trainers 
+                    {% if pending_trainers_count > 0 %}
+                    <span class="badge bg-danger ms-1">{{ pending_trainers_count }}</span>
+                    {% endif %}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="admins-tab" data-bs-toggle="tab" data-bs-target="#admins" type="button" role="tab">
+                    <i class="fas fa-user-shield me-2"></i> Administrators ({{ total_admins }})
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content" id="userTabsContent">
+            <!-- Regular Members Tab -->
+            <div class="tab-pane fade show active" id="members" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-success">
+                            <tr>
+                                <th><i class="fas fa-user me-2"></i>Full Name</th>
+                                <th><i class="fas fa-envelope me-2"></i>Email</th>
+                                <th><i class="fas fa-phone me-2"></i>Phone</th>
+                                <th><i class="fas fa-money-bill-wave me-2"></i>Payment Status</th>
+                                <th><i class="fas fa-calendar me-2"></i>Registered</th>
+                                <th><i class="fas fa-cog me-2"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in all_users %}
+                            {% if user.role == 'USER' %}
+                            <tr>
+                                <td class="fw-semibold">
+                                    <i class="fas fa-user-circle text-success me-2"></i>
+                                    {{ user.full_name }}
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.phone_number }}</td>
+                                <td>
+                                    {% if user.membership %}
+                                        {% if user.membership.payment_status == 'PAID' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>Paid
+                                            </span>
+                                        {% elif user.membership.payment_status == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock me-1"></i>Pending
+                                            </span>
+                                        {% elif user.membership.payment_status == 'CANCELLED' %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times-circle me-1"></i>Cancelled
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.date_of_registration|date:"M d, Y" }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#userModal{{ user.id }}">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Trainers Tab -->
+            <div class="tab-pane fade" id="trainers" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-warning">
+                            <tr>
+                                <th><i class="fas fa-user me-2"></i>Full Name</th>
+                                <th><i class="fas fa-envelope me-2"></i>Email</th>
+                                <th><i class="fas fa-phone me-2"></i>Phone</th>
+                                <th><i class="fas fa-dumbbell me-2"></i>Specialization</th>
+                                <th><i class="fas fa-calendar me-2"></i>Registered</th>
+                                <th><i class="fas fa-cog me-2"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in all_users %}
+                            {% if user.role == 'TRAINER' %}
+                            <tr>
+                                <td class="fw-semibold">
+                                    <i class="fas fa-user-tie text-warning me-2"></i>
+                                    {{ user.full_name }}
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.phone_number }}</td>
+                                <td>
+                                    {% if user.trainer_profile %}
+                                        <span class="badge bg-info">{{ user.trainer_profile.specialization }}</span>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.date_of_registration|date:"M d, Y" }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#userModal{{ user.id }}">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pending Trainers Tab -->
+            <div class="tab-pane fade" id="pending-trainers" role="tabpanel">
+                <div class="table-responsive">
+                    {% if pending_trainers_count > 0 %}
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Review trainer applications below. Check their qualifications, licenses, and certifications before approving.
+                    </div>
+                    <table class="table table-hover">
+                        <thead class="table-info">
+                            <tr>
+                                <th><i class="fas fa-user me-2"></i>Full Name</th>
+                                <th><i class="fas fa-envelope me-2"></i>Email</th>
+                                <th><i class="fas fa-phone me-2"></i>Phone</th>
+                                <th><i class="fas fa-dumbbell me-2"></i>Specialization</th>
+                                <th><i class="fas fa-briefcase me-2"></i>Experience</th>
+                                <th><i class="fas fa-calendar me-2"></i>Applied Date</th>
+                                <th><i class="fas fa-cog me-2"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trainer_profile in pending_trainers %}
+                            <tr>
+                                <td class="fw-semibold">
+                                    <i class="fas fa-user-clock text-info me-2"></i>
+                                    {{ trainer_profile.user.full_name }}
+                                </td>
+                                <td>{{ trainer_profile.user.email }}</td>
+                                <td>{{ trainer_profile.user.phone_number }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ trainer_profile.specialization }}</span>
+                                </td>
+                                <td>{{ trainer_profile.experience_years }} year{{ trainer_profile.experience_years|pluralize }}</td>
+                                <td>{{ trainer_profile.user.date_of_registration|date:"M d, Y" }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#trainerDetailsModal{{ trainer_profile.id }}">
+                                        <i class="fas fa-eye me-1"></i> Review
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="alert alert-success text-center">
+                        <i class="fas fa-check-circle me-2"></i>
+                        No pending trainer applications at this time.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Admins Tab -->
+            <div class="tab-pane fade" id="admins" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-primary">
+                            <tr>
+                                <th><i class="fas fa-user me-2"></i>Full Name</th>
+                                <th><i class="fas fa-envelope me-2"></i>Email</th>
+                                <th><i class="fas fa-phone me-2"></i>Phone</th>
+                                <th><i class="fas fa-graduation-cap me-2"></i>Qualification</th>
+                                <th><i class="fas fa-calendar me-2"></i>Registered</th>
+                                <th><i class="fas fa-cog me-2"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in all_users %}
+                            {% if user.role == 'ADMIN' %}
+                            <tr>
+                                <td class="fw-semibold">
+                                    <i class="fas fa-user-shield text-primary me-2"></i>
+                                    {{ user.full_name }}
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.phone_number }}</td>
+                                <td>
+                                    {% if user.admin_profile %}
+                                        {{ user.admin_profile.qualification|truncatewords:5 }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.date_of_registration|date:"M d, Y" }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#userModal{{ user.id }}">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Modals (Keep all modals for all users) -->
+    {% for user in all_users %}
+                    
+                    <!-- User Details Modal -->
+                    <div class="modal fade" id="userModal{{ user.id }}" tabindex="-1" style="pointer-events: auto !important;">
+                        <div class="modal-dialog modal-lg" style="pointer-events: auto !important;">
+                            <div class="modal-content" style="pointer-events: auto !important;">
+                                <div class="modal-header bg-primary text-white" style="pointer-events: auto !important;">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-user-circle me-2"></i> Edit User Details
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" action="{% url 'admin_edit_user' user.id %}" style="pointer-events: auto !important;">
+                                    {% csrf_token %}
+                                    <div class="modal-body" style="pointer-events: auto !important;">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="fas fa-user me-2 text-primary"></i> Full Name
+                                                </label>
+                                                <input type="text" class="form-control" name="full_name" value="{{ user.full_name }}" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="fas fa-envelope me-2 text-primary"></i> Email
+                                                </label>
+                                                <input type="email" class="form-control" name="email" value="{{ user.email }}" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="fas fa-phone me-2 text-primary"></i> Phone
+                                                </label>
+                                                <input type="text" class="form-control" name="phone_number" value="{{ user.phone_number }}" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="fas fa-user-tag me-2 text-primary"></i> Username
+                                                </label>
+                                                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="fas fa-calendar me-2 text-primary"></i> Registered
+                                                </label>
+                                                <input type="text" class="form-control" value="{{ user.date_of_registration|date:'F d, Y' }}" disabled>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    <i class="fas fa-tag me-2 text-primary"></i> Role
+                                                </label>
+                                                <input type="text" class="form-control" value="{{ user.get_role_display }}" disabled>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if user.role == 'TRAINER' and user.trainer_profile %}
+                                            <hr>
+                                            <h6 class="text-warning"><i class="fas fa-user-tie me-2"></i> Trainer Information</h6>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label fw-bold">Specialization</label>
+                                                    <input type="text" class="form-control" name="specialization" value="{{ user.trainer_profile.specialization }}" required>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label fw-bold">Experience (years)</label>
+                                                    <input type="number" class="form-control" name="experience_years" value="{{ user.trainer_profile.experience_years }}" required>
+                                                </div>
+                                                <div class="col-12 mb-3">
+                                                    <label class="form-label fw-bold">Qualification</label>
+                                                    <textarea class="form-control" name="qualification" rows="2" required>{{ user.trainer_profile.qualification }}</textarea>
+                                                </div>
+                                                <div class="col-12 mb-3">
+                                                    <label class="form-label fw-bold">Certifications</label>
+                                                    <textarea class="form-control" name="certification_details" rows="3" required>{{ user.trainer_profile.certification_details }}</textarea>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if user.role == 'ADMIN' and user.admin_profile %}
+                                            <hr>
+                                            <h6 class="text-primary"><i class="fas fa-user-shield me-2"></i> Admin Information</h6>
+                                            <div class="row">
+                                                <div class="col-12 mb-3">
+                                                    <label class="form-label fw-bold">Qualification</label>
+                                                    <textarea class="form-control" name="qualification" rows="2" required>{{ user.admin_profile.qualification }}</textarea>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer" style="pointer-events: auto !important;">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="pointer-events: auto !important;">
+                                            <i class="fas fa-times me-2"></i> Cancel
+                                        </button>
+                                        <button type="submit" class="btn btn-primary" style="pointer-events: auto !important;">
+                                            <i class="fas fa-save me-2"></i> Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+    {% endfor %}
+    
+    <!-- Memberships Section with Tabs -->
+    <div class="user-table mt-5">
+        <h3 class="mb-4">
+            <i class="fas fa-id-card me-2"></i> Membership Management
+        </h3>
+        
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs mb-3" id="membershipTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="l1-tab" data-bs-toggle="tab" data-bs-target="#l1-memberships" type="button" role="tab">
+                    <i class="fas fa-walking me-2"></i> L1 FitStarter ({{ l1_count }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="l2-tab" data-bs-toggle="tab" data-bs-target="#l2-memberships" type="button" role="tab">
+                    <i class="fas fa-running me-2"></i> L2 ProActive ({{ l2_count }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="l3-tab" data-bs-toggle="tab" data-bs-target="#l3-memberships" type="button" role="tab">
+                    <i class="fas fa-crown me-2"></i> L3 EliteChamp ({{ l3_count }})
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content" id="membershipTabsContent">
+            <!-- L1 FitStarter Memberships -->
+            <div class="tab-pane fade show active" id="l1-memberships" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-primary">
+                            <tr>
+                                <th><i class="fas fa-user me-2"></i>Member Name</th>
+                                <th><i class="fas fa-coins me-2"></i>Total Fee</th>
+                                <th><i class="fas fa-calendar-plus me-2"></i>Joined</th>
+                                <th><i class="fas fa-calendar-times me-2"></i>Expiry Date</th>
+                                <th><i class="fas fa-heartbeat me-2"></i>Medical History</th>
+                                <th><i class="fas fa-chart-line me-2"></i>Status</th>
+                                <th><i class="fas fa-cog me-2"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membership in memberships %}
+                            {% if membership.membership_tier == 'L1' %}
+                            <tr {% if membership.is_expiring_soon %}class="table-warning"{% endif %}>
+                                <td class="fw-semibold">
+                                    <i class="fas fa-user-circle text-primary me-2"></i>
+                                    {{ membership.user.full_name }}
+                                </td>
+                                <td class="fw-bold text-success">₹{{ membership.total_amount|floatformat:2 }}</td>
+                                <td>{{ membership.date_of_joining|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if membership.get_membership_expiry_date %}
+                                        {{ membership.get_membership_expiry_date|date:"M d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if membership.medical_history %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-notes-medical me-1"></i> Yes
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">None</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if membership.is_expiring_soon %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Expiring in {{ membership.days_until_expiry }} day{{ membership.days_until_expiry|pluralize }}
+                                        </span>
+                                    {% elif membership.days_until_expiry and membership.days_until_expiry > 0 %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i> Active
+                                        </span>
+                                    {% elif membership.days_until_expiry and membership.days_until_expiry < 0 %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-times-circle me-1"></i> Expired
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-infinity me-1"></i> No Expiry
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#membershipModal{{ membership.id }}">
+                                        <i class="fas fa-info-circle me-1"></i> Details
+                                    </button>
+                                    {% if membership.medical_history %}
+                                    <a href="{% url 'admin_manage_user_data' membership.user.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-cog me-1"></i> Manage
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- L2 ProActive Memberships -->
+            <div class="tab-pane fade" id="l2-memberships" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-success">
+                            <tr>
+                                <th><i class="fas fa-user me-2"></i>Member Name</th>
+                                <th><i class="fas fa-coins me-2"></i>Total Fee</th>
+                                <th><i class="fas fa-calendar-plus me-2"></i>Joined</th>
+                                <th><i class="fas fa-calendar-times me-2"></i>Expiry Date</th>
+                                <th><i class="fas fa-flask me-2"></i>Extra Protein</th>
+                                <th><i class="fas fa-chart-line me-2"></i>Status</th>
+                                <th><i class="fas fa-cog me-2"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membership in memberships %}
+                            {% if membership.membership_tier == 'L2' %}
+                            <tr {% if membership.is_expiring_soon %}class="table-warning"{% endif %}>
+                                <td class="fw-semibold">
+                                    <i class="fas fa-running text-success me-2"></i>
+                                    {{ membership.user.full_name }}
+                                </td>
+                                <td class="fw-bold text-success">₹{{ membership.total_amount|floatformat:2 }}</td>
+                                <td>{{ membership.date_of_joining|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if membership.get_membership_expiry_date %}
+                                        {{ membership.get_membership_expiry_date|date:"M d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if membership.extra_protein_needed %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-check me-1"></i> Yes
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if membership.is_expiring_soon %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Expiring in {{ membership.days_until_expiry }} day{{ membership.days_until_expiry|pluralize }}
+                                        </span>
+                                    {% elif membership.days_until_expiry and membership.days_until_expiry > 0 %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i> Active
+                                        </span>
+                                    {% elif membership.days_until_expiry and membership.days_until_expiry < 0 %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-times-circle me-1"></i> Expired
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-infinity me-1"></i> No Expiry
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#membershipModal{{ membership.id }}">
+                                        <i class="fas fa-info-circle me-1"></i> Details
+                                    </button>
+                                    <a href="{% url 'admin_manage_user_data' membership.user.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-cog me-1"></i> Manage
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- L3 EliteChamp Memberships -->
+            <div class="tab-pane fade" id="l3-memberships" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-warning">
+                            <tr>
+                                <th><i class="fas fa-user me-2"></i>Member Name</th>
+                                <th><i class="fas fa-coins me-2"></i>Total Fee</th>
+                                <th><i class="fas fa-calendar-plus me-2"></i>Joined</th>
+                                <th><i class="fas fa-calendar-times me-2"></i>Expiry Date</th>
+                                <th><i class="fas fa-puzzle-piece me-2"></i>Add-ons</th>
+                                <th><i class="fas fa-chart-line me-2"></i>Status</th>
+                                <th><i class="fas fa-cog me-2"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for membership in memberships %}
+                            {% if membership.membership_tier == 'L3' %}
+                            <tr {% if membership.is_expiring_soon %}class="table-warning"{% endif %}>
+                                <td class="fw-semibold">
+                                    <i class="fas fa-crown text-warning me-2"></i>
+                                    {{ membership.user.full_name }}
+                                </td>
+                                <td class="fw-bold text-success">₹{{ membership.total_amount|floatformat:2 }}</td>
+                                <td>{{ membership.date_of_joining|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if membership.get_membership_expiry_date %}
+                                        {{ membership.get_membership_expiry_date|date:"M d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if membership.l3_addons.all %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-star me-1"></i> {{ membership.l3_addons.count }} addon{{ membership.l3_addons.count|pluralize }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">None</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if membership.is_expiring_soon %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Expiring in {{ membership.days_until_expiry }} day{{ membership.days_until_expiry|pluralize }}
+                                        </span>
+                                    {% elif membership.days_until_expiry and membership.days_until_expiry > 0 %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i> Active
+                                        </span>
+                                    {% elif membership.days_until_expiry and membership.days_until_expiry < 0 %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-times-circle me-1"></i> Expired
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-infinity me-1"></i> No Expiry
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#membershipModal{{ membership.id }}">
+                                        <i class="fas fa-info-circle me-1"></i> Details
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Membership Modals (Keep all modals for all memberships) -->
+    {% for membership in memberships %}
+                    
+                    <!-- Membership Details Modal -->
+                    <div class="modal fade" id="membershipModal{{ membership.id }}" tabindex="-1" style="pointer-events: auto !important;">
+                        <div class="modal-dialog modal-lg" style="pointer-events: auto !important;">
+                            <div class="modal-content" style="pointer-events: auto !important;">
+                                <div class="modal-header bg-success text-white" style="pointer-events: auto !important;">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-id-card me-2"></i> Membership Details
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body" style="pointer-events: auto !important;">
+                                    <h6 class="fw-bold">{{ membership.user.full_name }}</h6>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6 mb-3">
+                                            <strong>Age:</strong> {{ membership.age }} years
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <strong>Weight:</strong> {{ membership.current_weight }} kg
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <strong>Base Fee:</strong> ₹{{ membership.base_registration_fee }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <strong>Monthly Fee:</strong> ₹{{ membership.monthly_fee|floatformat:2 }}
+                                        </div>
+                                        {% if membership.discount_amount > 0 %}
+                                        <div class="col-md-6 mb-3">
+                                            <strong>Discount:</strong> <span class="text-success">- ₹{{ membership.discount_amount|floatformat:2 }}</span>
+                                        </div>
+                                        {% endif %}
+                                        <div class="col-md-6 mb-3">
+                                            <strong>Addon Fees:</strong> ₹{{ membership.addon_fees|floatformat:2 }}
+                                        </div>
+                                        <div class="col-12 mb-3">
+                                            <strong>Medical History:</strong><br>
+                                            {{ membership.medical_history|default:"None" }}
+                                        </div>
+                                        
+                                        {% if membership.l3_addons.all %}
+                                        <div class="col-12">
+                                            <strong>L3 Add-ons:</strong>
+                                            <ul class="mt-2">
+                                                {% for addon in membership.l3_addons.all %}
+                                                <li>
+                                                    {{ addon.get_addon_type_display }}
+                                                    {% if addon.assigned_trainer %}
+                                                        - <span class="text-primary">{{ addon.assigned_trainer.full_name }}</span>
+                                                    {% endif %}
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="alert alert-success mt-3">
+                                        <strong>Total Amount:</strong> ₹{{ membership.total_amount|floatformat:2 }}
+                                    </div>
+                                    
+                                    <!-- Payment Status Section -->
+                                    <div class="card mt-3" style="pointer-events: auto !important;">
+                                        <div class="card-header {% if membership.payment_status == 'PAID' %}bg-success{% elif membership.payment_status == 'PENDING' %}bg-warning{% else %}bg-danger{% endif %} text-white" style="pointer-events: auto !important;">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-money-bill-wave me-2"></i>Payment Status
+                                            </h6>
+                                        </div>
+                                        <div class="card-body" style="pointer-events: auto !important;">
+                                            <div class="mb-3">
+                                                <strong>Current Status:</strong> 
+                                                {% if membership.payment_status == 'PAID' %}
+                                                    <span class="badge bg-success ms-2">
+                                                        <i class="fas fa-check-circle me-1"></i>Payment Confirmed
+                                                    </span>
+                                                {% elif membership.payment_status == 'PENDING' %}
+                                                    <span class="badge bg-warning text-dark ms-2">
+                                                        <i class="fas fa-clock me-1"></i>Payment Pending
+                                                    </span>
+                                                {% elif membership.payment_status == 'CANCELLED' %}
+                                                    <span class="badge bg-danger ms-2">
+                                                        <i class="fas fa-times-circle me-1"></i>Payment Cancelled
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            {% if membership.payment_confirmed_by %}
+                                            <div class="mb-2">
+                                                <strong>Confirmed By:</strong> {{ membership.payment_confirmed_by.full_name }}
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>Confirmed Date:</strong> {{ membership.payment_confirmed_date|date:"M d, Y H:i" }}
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% if membership.payment_notes %}
+                                            <div class="mb-2">
+                                                <strong>Notes:</strong> {{ membership.payment_notes }}
+                                            </div>
+                                            {% endif %}
+                                            
+                                            <!-- Payment Action Buttons -->
+                                            {% if membership.payment_status == 'PENDING' %}
+                                            <div class="mt-3" style="pointer-events: auto !important;">
+                                                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#confirmPaymentModal{{ user.id }}" style="pointer-events: auto !important;">
+                                                    <i class="fas fa-check me-1"></i>Confirm Payment
+                                                </button>
+                                                <button class="btn btn-danger btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#cancelPaymentModal{{ user.id }}" style="pointer-events: auto !important;">
+                                                    <i class="fas fa-times me-1"></i>Cancel Payment
+                                                </button>
+                                            </div>
+                                            {% elif membership.payment_status == 'PAID' %}
+                                            <div class="alert alert-info mt-3 mb-0">
+                                                <i class="fas fa-info-circle me-2"></i>Payment has been confirmed and processed.
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer" style="pointer-events: auto !important;">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="pointer-events: auto !important;">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Payment Confirmation Modals -->
+    {% for user in all_users %}
+    {% if user.role == 'USER' and user.membership and user.membership.payment_status == 'PENDING' %}
+    <!-- Confirm Payment Modal -->
+    <div class="modal fade" id="confirmPaymentModal{{ user.id }}" tabindex="-1" style="pointer-events: auto !important;">
+        <div class="modal-dialog" style="pointer-events: auto !important;">
+            <div class="modal-content" style="pointer-events: auto !important;">
+                <div class="modal-header bg-success text-white" style="pointer-events: auto !important;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>Confirm Payment
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{% url 'confirm_payment' user.id %}" style="pointer-events: auto !important;" onsubmit="console.log('Confirming payment for user {{ user.id }}');">
+                    {% csrf_token %}
+                    <div class="modal-body" style="pointer-events: auto !important;">
+                        <p>Confirm payment received from <strong>{{ user.full_name }}</strong>?</p>
+                        <div class="alert alert-info">
+                            <strong>Amount:</strong> ₹{{ user.membership.total_amount|floatformat:2 }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="payment_notes{{ user.id }}" class="form-label">Payment Notes (Optional)</label>
+                            <textarea class="form-control" id="payment_notes{{ user.id }}" name="payment_notes" rows="3" placeholder="Add any notes about the payment method, transaction ID, etc." style="pointer-events: auto !important;"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="pointer-events: auto !important;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="pointer-events: auto !important;">Cancel</button>
+                        <button type="submit" class="btn btn-success" style="pointer-events: auto !important;">
+                            <i class="fas fa-check me-1"></i>Confirm Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cancel Payment Modal -->
+    <div class="modal fade" id="cancelPaymentModal{{ user.id }}" tabindex="-1" style="pointer-events: auto !important;">
+        <div class="modal-dialog" style="pointer-events: auto !important;">
+            <div class="modal-content" style="pointer-events: auto !important;">
+                <div class="modal-header bg-danger text-white" style="pointer-events: auto !important;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-times-circle me-2"></i>Cancel Payment
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{% url 'cancel_payment' user.id %}" style="pointer-events: auto !important;">
+                    {% csrf_token %}
+                    <div class="modal-body" style="pointer-events: auto !important;">
+                        <p>Cancel payment for <strong>{{ user.full_name }}</strong>?</p>
+                        <div class="alert alert-warning">
+                            <strong>Amount:</strong> ₹{{ user.membership.total_amount|floatformat:2 }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="cancellation_reason{{ user.id }}" class="form-label">Cancellation Reason <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="cancellation_reason{{ user.id }}" name="cancellation_reason" rows="3" placeholder="Provide reason for cancellation" required style="pointer-events: auto !important;"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="pointer-events: auto !important;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="pointer-events: auto !important;">Close</button>
+                        <button type="submit" class="btn btn-danger" style="pointer-events: auto !important;">
+                            <i class="fas fa-times me-1"></i>Cancel Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+    
+    <!-- Pending Trainer Details Modals -->
+    {% for trainer_profile in pending_trainers %}
+    <div class="modal fade" id="trainerDetailsModal{{ trainer_profile.id }}" tabindex="-1" style="pointer-events: auto !important;">
+        <div class="modal-dialog modal-xl" style="pointer-events: auto !important;">
+            <div class="modal-content" style="pointer-events: auto !important;">
+                <div class="modal-header bg-info text-white" style="pointer-events: auto !important;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-clock me-2"></i> Review Trainer Application - {{ trainer_profile.user.full_name }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="pointer-events: auto !important;">
+                    <div class="row">
+                        <!-- Personal Information -->
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-primary"><i class="fas fa-user me-2"></i>Personal Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="40%">Full Name:</th>
+                                    <td>{{ trainer_profile.user.full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>{{ trainer_profile.user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Phone:</th>
+                                    <td>{{ trainer_profile.user.phone_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Username:</th>
+                                    <td>{{ trainer_profile.user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Applied Date:</th>
+                                    <td>{{ trainer_profile.user.date_of_registration|date:"M d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Professional Information -->
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-primary"><i class="fas fa-briefcase me-2"></i>Professional Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th width="40%">Specialization:</th>
+                                    <td><span class="badge bg-info">{{ trainer_profile.specialization }}</span></td>
+                                </tr>
+                                <tr>
+                                    <th>Experience:</th>
+                                    <td>{{ trainer_profile.experience_years }} year{{ trainer_profile.experience_years|pluralize }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Qualification:</th>
+                                    <td>{{ trainer_profile.qualification }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Certifications -->
+                        <div class="col-md-12 mb-3">
+                            <h6 class="text-primary"><i class="fas fa-certificate me-2"></i>Certifications</h6>
+                            <div class="border rounded p-3 bg-light">
+                                {{ trainer_profile.certification_details|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- Licenses -->
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-primary"><i class="fas fa-id-card me-2"></i>Licenses</h6>
+                            <div class="border rounded p-3 bg-light">
+                                {% if trainer_profile.licenses %}
+                                    {{ trainer_profile.licenses|linebreaks }}
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Accreditations -->
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-primary"><i class="fas fa-award me-2"></i>Accreditations</h6>
+                            <div class="border rounded p-3 bg-light">
+                                {% if trainer_profile.accreditations %}
+                                    {{ trainer_profile.accreditations|linebreaks }}
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between" style="pointer-events: auto !important;">
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Close
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#rejectModal{{ trainer_profile.id }}" data-bs-dismiss="modal">
+                            <i class="fas fa-times-circle me-2"></i>Reject
+                        </button>
+                        <a href="{% url 'approve_trainer' trainer_profile.id %}" class="btn btn-success">
+                            <i class="fas fa-check-circle me-2"></i>Approve Trainer
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rejection Modal -->
+    <div class="modal fade" id="rejectModal{{ trainer_profile.id }}" tabindex="-1" style="pointer-events: auto !important;">
+        <div class="modal-dialog" style="pointer-events: auto !important;">
+            <div class="modal-content" style="pointer-events: auto !important;">
+                <div class="modal-header bg-danger text-white" style="pointer-events: auto !important;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-times-circle me-2"></i> Reject Trainer Application
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{% url 'reject_trainer' trainer_profile.id %}" style="pointer-events: auto !important;">
+                    {% csrf_token %}
+                    <div class="modal-body" style="pointer-events: auto !important;">
+                        <p class="mb-3">You are about to reject <strong>{{ trainer_profile.user.full_name }}</strong>'s trainer application.</p>
+                        <div class="mb-3">
+                            <label for="rejection_reason{{ trainer_profile.id }}" class="form-label fw-bold">
+                                <i class="fas fa-comment me-2"></i>Reason for Rejection (Required)
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                id="rejection_reason{{ trainer_profile.id }}" 
+                                name="rejection_reason" 
+                                rows="4" 
+                                placeholder="Please provide a detailed reason for rejection..."
+                                required></textarea>
+                            <small class="text-muted">This reason will be sent to the applicant via email.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="pointer-events: auto !important;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times-circle me-2"></i>Confirm Rejection
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

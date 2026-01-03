@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Trainer Dashboard - HealthHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .client-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border-left: 4px solid #f59e0b;
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .client-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">
+                    <i class="fas fa-user-tie me-3"></i> Trainer Dashboard
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Welcome, {{ request.user.full_name }}
+                </p>
+            </div>
+            <a href="{% url 'logout' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </a>
+        </div>
+    </div>
+    
+    <!-- Personal Information -->
+    <div class="info-card">
+        <h3 class="mb-4">
+            <i class="fas fa-id-card me-2 text-warning"></i> Your Profile
+        </h3>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <strong><i class="fas fa-user me-2"></i> Full Name:</strong><br>
+                {{ request.user.full_name }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong><i class="fas fa-envelope me-2"></i> Email:</strong><br>
+                {{ request.user.email }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong><i class="fas fa-phone me-2"></i> Phone:</strong><br>
+                {{ request.user.phone_number }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong><i class="fas fa-dumbbell me-2"></i> Specialization:</strong><br>
+                {{ trainer_profile.specialization }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong><i class="fas fa-award me-2"></i> Experience:</strong><br>
+                {{ trainer_profile.experience_years }} years
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong><i class="fas fa-graduation-cap me-2"></i> Qualification:</strong><br>
+                {{ trainer_profile.qualification }}
+            </div>
+            <div class="col-12 mb-3">
+                <strong><i class="fas fa-certificate me-2"></i> Certifications:</strong><br>
+                {{ trainer_profile.certification_details }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assigned Clients -->
+    <div class="info-card">
+        <h3 class="mb-4">
+            <i class="fas fa-users me-2 text-warning"></i> Your Assigned Clients
+            <span class="badge bg-warning text-dark ms-2">{{ total_clients }}</span>
+        </h3>
+        
+        {% if assigned_clients %}
+            {% for addon in assigned_clients %}
+            <div class="client-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="mb-2">
+                            <i class="fas fa-user-circle me-2 text-primary"></i>
+                            {{ addon.membership.user.full_name }}
+                        </h5>
+                        <p class="mb-1 text-muted">
+                            <i class="fas fa-envelope me-2"></i> {{ addon.membership.user.email }}
+                        </p>
+                        <p class="mb-1 text-muted">
+                            <i class="fas fa-phone me-2"></i> {{ addon.membership.user.phone_number }}
+                        </p>
+                        <p class="mb-0">
+                            <span class="badge bg-success">{{ addon.membership.get_membership_tier_display }}</span>
+                            <span class="badge bg-info text-dark ms-2">
+                                <i class="fas fa-calendar me-1"></i> Joined: {{ addon.membership.date_of_joining|date:"M d, Y" }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <p class="mb-1"><strong>Age:</strong> {{ addon.membership.age }} years</p>
+                        <p class="mb-1"><strong>Weight:</strong> {{ addon.membership.current_weight }} kg</p>
+                        <button class="btn btn-sm btn-outline-warning mt-2" data-bs-toggle="modal" data-bs-target="#clientModal{{ addon.id }}">
+                            <i class="fas fa-info-circle me-1"></i> Full Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Client Details Modal -->
+            <div class="modal fade" id="clientModal{{ addon.id }}" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title">
+                                <i class="fas fa-user-circle me-2"></i> Client Details
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <h6 class="fw-bold mb-3">{{ addon.membership.user.full_name }}</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong>Email:</strong><br>
+                                    {{ addon.membership.user.email }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Phone:</strong><br>
+                                    {{ addon.membership.user.phone_number }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Age:</strong><br>
+                                    {{ addon.membership.age }} years
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Current Weight:</strong><br>
+                                    {{ addon.membership.current_weight }} kg
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Membership Tier:</strong><br>
+                                    {{ addon.membership.get_membership_tier_display }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Date of Joining:</strong><br>
+                                    {{ addon.membership.date_of_joining|date:"F d, Y" }}
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <strong>Medical History:</strong><br>
+                                    <div class="alert alert-info">
+                                        {{ addon.membership.medical_history|default:"No medical history recorded" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> You don't have any assigned clients yet.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

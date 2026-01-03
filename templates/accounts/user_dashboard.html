@@ -1,0 +1,683 @@
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard - HealthHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .membership-badge {
+        display: inline-block;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 1rem 0;
+    }
+    
+    .nav-tabs .nav-link {
+        color: #059669;
+        font-weight: 600;
+        border: none;
+        border-bottom: 3px solid transparent;
+        padding: 1rem 1.5rem;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        border-bottom-color: #10b981;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #10b981;
+        border-bottom-color: #10b981;
+        background: transparent;
+    }
+    
+    .workout-day-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+    }
+    
+    .workout-day-card:hover {
+        border-color: #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+    
+    .exercise-item {
+        background: #f9fafb;
+        border-left: 4px solid #10b981;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .exercise-completed {
+        background: #d1fae5;
+        border-left-color: #059669;
+    }
+    
+    .protein-table th {
+        background: #10b981;
+        color: white;
+    }
+    
+    .checkup-card {
+        border-left: 5px solid #10b981;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+    
+    .checkup-scheduled {
+        border-left-color: #fbbf24;
+    }
+    
+    .checkup-completed {
+        border-left-color: #10b981;
+    }
+    
+    .checkup-cancelled {
+        border-left-color: #ef4444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">
+                    <i class="fas fa-user me-3"></i> My Dashboard
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Welcome, {{ request.user.full_name }}
+                </p>
+            </div>
+            <a href="{% url 'logout' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </a>
+        </div>
+    </div>
+    
+    <!-- Membership Expiry Warning -->
+    {% if expiry_warning and days_remaining is not None %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <h5 class="alert-heading">
+            <i class="fas fa-exclamation-triangle me-2"></i> Membership Expiring Soon!
+        </h5>
+        <p class="mb-0">
+            Your membership will expire in <strong>{{ days_remaining }} day{{ days_remaining|pluralize }}</strong> 
+            on <strong>{{ expiry_date|date:"F d, Y" }}</strong>. 
+            Please renew your membership to continue enjoying our services.
+        </p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    {% if membership %}
+    <!-- Tabs Navigation -->
+    <div class="info-card">
+        <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="fas fa-home me-2"></i> Overview
+                </button>
+            </li>
+            {% if membership.membership_tier == 'L3' and assigned_trainers %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="trainers-tab" data-bs-toggle="tab" data-bs-target="#trainers" type="button" role="tab">
+                    <i class="fas fa-user-tie me-2"></i> My Trainers
+                </button>
+            </li>
+            {% endif %}
+            {% if membership.membership_tier == 'L2' %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="workout-tab" data-bs-toggle="tab" data-bs-target="#workout" type="button" role="tab">
+                    <i class="fas fa-dumbbell me-2"></i> Workout Plan
+                </button>
+            </li>
+            {% endif %}
+            {% if membership.extra_protein_needed %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="protein-tab" data-bs-toggle="tab" data-bs-target="#protein" type="button" role="tab">
+                    <i class="fas fa-flask me-2"></i> Protein Intake
+                </button>
+            </li>
+            {% endif %}
+            {% if membership.medical_history %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="medical-tab" data-bs-toggle="tab" data-bs-target="#medical" type="button" role="tab">
+                    <i class="fas fa-heartbeat me-2"></i> Medical Checkups
+                </button>
+            </li>
+            {% endif %}
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content" id="dashboardTabsContent">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <h3 class="mb-4">
+                    <i class="fas fa-id-card me-2 text-success"></i> Personal Information
+                </h3>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-user me-2"></i> Full Name:</strong><br>
+                        {{ request.user.full_name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-envelope me-2"></i> Email:</strong><br>
+                        {{ request.user.email }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-phone me-2"></i> Phone:</strong><br>
+                        {{ request.user.phone_number }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-calendar me-2"></i> Member Since:</strong><br>
+                        {{ request.user.date_of_registration|date:"F d, Y" }}
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <h3 class="mb-4">
+                    <i class="fas fa-crown me-2 text-success"></i> Membership Details
+                </h3>
+                
+                <div class="text-center mb-4">
+                    {% if membership.membership_tier == 'L1' %}
+                        <span class="membership-badge bg-primary text-white">
+                            <i class="fas fa-walking me-2"></i> L1 FitStarter
+                        </span>
+                    {% elif membership.membership_tier == 'L2' %}
+                        <span class="membership-badge bg-success text-white">
+                            <i class="fas fa-running me-2"></i> L2 ProActive
+                        </span>
+                    {% else %}
+                        <span class="membership-badge bg-warning text-dark">
+                            <i class="fas fa-crown me-2"></i> L3 EliteChamp
+                        </span>
+                    {% endif %}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-user me-2"></i> Age:</strong><br>
+                        {{ membership.age }} years
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-weight me-2"></i> Current Weight:</strong><br>
+                        {{ membership.current_weight }} kg
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-calendar-day me-2"></i> Date of Joining:</strong><br>
+                        {{ membership.date_of_joining|date:"F d, Y" }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-calendar-times me-2"></i> Membership Expiry:</strong><br>
+                        {% if expiry_date %}
+                            {{ expiry_date|date:"F d, Y" }}
+                            {% if days_remaining >= 0 %}
+                                <span class="badge {% if expiry_warning %}bg-warning text-dark{% else %}bg-success{% endif %} ms-2">
+                                    {{ days_remaining }} day{{ days_remaining|pluralize }} remaining
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger ms-2">Expired</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">No expiry date set</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong><i class="fas fa-id-badge me-2"></i> Registration ID:</strong><br>
+                        {{ membership.registration_id }}
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <h5 class="mb-3"><i class="fas fa-calculator me-2"></i> Fee Breakdown</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong>Base Registration Fee:</strong> ₹{{ membership.base_registration_fee|floatformat:2 }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Monthly Fee:</strong> ₹{{ membership.monthly_fee|floatformat:2 }}
+                    </div>
+                    {% if membership.discount_amount > 0 %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Discount:</strong> <span class="text-success">- ₹{{ membership.discount_amount|floatformat:2 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Addon Fees:</strong> ₹{{ membership.addon_fees|floatformat:2 }}
+                    </div>
+                </div>
+                
+                <div class="alert alert-success mt-3">
+                    <strong><i class="fas fa-money-bill-wave me-2"></i> Total Amount:</strong> 
+                    <span class="fs-4">₹{{ membership.total_amount|floatformat:2 }}</span>
+                </div>
+                
+                <!-- Payment Status Alert -->
+                <div class="mt-3">
+                    <h5 class="mb-3"><i class="fas fa-credit-card me-2"></i> Payment Status</h5>
+                    {% if membership.payment_status == 'PAID' %}
+                        <div class="alert alert-success">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle fa-2x me-3"></i>
+                                <div>
+                                    <strong>Payment Confirmed</strong>
+                                    <p class="mb-0">Your payment has been received and confirmed.</p>
+                                    {% if membership.payment_confirmed_date %}
+                                    <small class="text-muted">Confirmed on {{ membership.payment_confirmed_date|date:"F d, Y" }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% elif membership.payment_status == 'PENDING' %}
+                        <div class="alert alert-warning">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock fa-2x me-3"></i>
+                                <div>
+                                    <strong>Payment Pending</strong>
+                                    <p class="mb-0">Your payment is pending confirmation. Please complete the payment or contact the admin.</p>
+                                    <small class="text-muted">Amount Due: ₹{{ membership.total_amount|floatformat:2 }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% elif membership.payment_status == 'CANCELLED' %}
+                        <div class="alert alert-danger">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-times-circle fa-2x me-3"></i>
+                                <div>
+                                    <strong>Payment Cancelled</strong>
+                                    <p class="mb-0">Your payment has been cancelled. Please contact the admin for more information.</p>
+                                    {% if membership.payment_notes %}
+                                    <small class="text-muted">Reason: {{ membership.payment_notes }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {% if membership.medical_history %}
+                <div class="mt-3">
+                    <strong><i class="fas fa-notes-medical me-2"></i> Medical History:</strong>
+                    <div class="alert alert-info mt-2">
+                        {{ membership.medical_history }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- My Trainers Tab (L3 Only) -->
+            {% if membership.membership_tier == 'L3' and assigned_trainers %}
+            <div class="tab-pane fade" id="trainers" role="tabpanel">
+                <h3 class="mb-4">
+                    <i class="fas fa-user-tie me-2 text-warning"></i> Your Assigned Trainers
+                </h3>
+                
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-star me-2"></i>
+                    <strong>Rate Your Experience:</strong> Help others by sharing your feedback about your trainers!
+                </div>
+                
+                {% for item in assigned_trainers %}
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-2">
+                                    <i class="fas fa-user-circle me-2 text-warning"></i>
+                                    {{ item.trainer.full_name }}
+                                </h5>
+                                <p class="mb-1">
+                                    <i class="fas fa-envelope me-2 text-muted"></i>
+                                    <small>{{ item.trainer.email }}</small>
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-phone me-2 text-muted"></i>
+                                    <small>{{ item.trainer.phone_number }}</small>
+                                </p>
+                                {% if item.trainer.trainer_profile %}
+                                <p class="mb-0">
+                                    <span class="badge bg-primary">{{ item.trainer.trainer_profile.specialization }}</span>
+                                    <span class="badge bg-secondary">{{ item.trainer.trainer_profile.experience_years }} years exp</span>
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 text-end">
+                                {% if item.existing_rating %}
+                                <div class="mb-2">
+                                    <strong>Your Rating:</strong>
+                                    <span class="text-warning fs-5">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= item.existing_rating.rating %}
+                                                <i class="fas fa-star"></i>
+                                            {% else %}
+                                                <i class="far fa-star"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </span>
+                                </div>
+                                <a href="{% url 'rate_trainer' item.trainer.id %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-edit me-2"></i> Update Rating
+                                </a>
+                                {% else %}
+                                <p class="text-muted mb-2">
+                                    <i class="far fa-star me-1"></i> Not rated yet
+                                </p>
+                                <a href="{% url 'rate_trainer' item.trainer.id %}" class="btn btn-warning">
+                                    <i class="fas fa-star me-2"></i> Rate Trainer
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'trainer_ratings' item.trainer.id %}" class="btn btn-outline-secondary ms-2">
+                                    <i class="fas fa-comments me-2"></i> All Reviews
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Workout Plan Tab -->
+            {% if membership.membership_tier == 'L2' %}
+            <div class="tab-pane fade" id="workout" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="mb-0">
+                        <i class="fas fa-dumbbell me-2 text-success"></i> Your Weekly Workout Plan
+                    </h3>
+                    <a href="{% url 'workout_progress_chart' %}" class="btn btn-success">
+                        <i class="fas fa-chart-line me-2"></i> View Progress Charts
+                    </a>
+                </div>
+                
+                {% if workout_plans %}
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Check off each exercise as you complete it. Your workout plan changes every week!
+                    </div>
+                    
+                    {% for plan in workout_plans %}
+                    <div class="workout-day-card">
+                        <h4 class="text-success mb-3">
+                            <i class="fas fa-calendar-day me-2"></i> {{ plan.get_day_of_week_display }}
+                        </h4>
+                        
+                        {% if plan.exercises.all %}
+                            {% for exercise in plan.exercises.all %}
+                            <div class="exercise-item {% if exercise.is_completed %}exercise-completed{% endif %}" id="exercise-{{ exercise.id }}">
+                                <div>
+                                    <div class="form-check">
+                                        <input class="form-check-input exercise-checkbox" type="checkbox" 
+                                               id="check-{{ exercise.id }}" 
+                                               data-exercise-id="{{ exercise.id }}"
+                                               {% if exercise.is_completed %}checked{% endif %}>
+                                        <label class="form-check-label fw-bold" for="check-{{ exercise.id }}">
+                                            {{ exercise.exercise_name }}
+                                        </label>
+                                    </div>
+                                    <small class="text-muted ms-4">
+                                        <span class="badge bg-secondary">{{ exercise.get_exercise_type_display }}</span>
+                                        {{ exercise.sets }} sets × {{ exercise.reps }} reps
+                                    </small>
+                                    {% if exercise.description %}
+                                    <p class="mb-0 mt-2 ms-4 small text-muted">{{ exercise.description }}</p>
+                                    {% endif %}
+                                </div>
+                                {% if exercise.is_completed %}
+                                <div class="text-success">
+                                    <i class="fas fa-check-circle fa-2x"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No exercises scheduled for this day.</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No workout plan available for this week. Please contact your admin to set up your plan.
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Protein Intake Tab -->
+            {% if membership.extra_protein_needed %}
+            <div class="tab-pane fade" id="protein" role="tabpanel">
+                <h3 class="mb-4">
+                    <i class="fas fa-flask me-2 text-success"></i> Protein Intake Tracking
+                </h3>
+                
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Your protein intake is tracked and updated by the admin team.
+                </div>
+                
+                {% if protein_intakes %}
+                <div class="table-responsive">
+                    <table class="table table-hover protein-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Morning Intake</th>
+                                <th>Evening Intake</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for intake in protein_intakes %}
+                            <tr>
+                                <td>{{ intake.date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if intake.morning_intake %}
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> Taken</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary"><i class="fas fa-times"></i> Not Taken</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if intake.evening_intake %}
+                                        <span class="badge bg-success"><i class="fas fa-check"></i> Taken</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary"><i class="fas fa-times"></i> Not Taken</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ intake.notes|default:"—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No protein intake records available yet.
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Medical Checkups Tab -->
+            {% if membership.medical_history %}
+            <div class="tab-pane fade" id="medical" role="tabpanel">
+                <h3 class="mb-4">
+                    <i class="fas fa-heartbeat me-2 text-success"></i> Medical Checkup Records
+                </h3>
+                
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Regular medical checkups are important for monitoring your health progress.
+                </div>
+                
+                {% if medical_checkups %}
+                    {% for checkup in medical_checkups %}
+                    <div class="checkup-card checkup-{{ checkup.status|lower }}">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5 class="mb-2">
+                                    <i class="fas fa-stethoscope me-2"></i> {{ checkup.checkup_type }}
+                                </h5>
+                                <p class="mb-1">
+                                    <strong>Date:</strong> {{ checkup.checkup_date|date:"F d, Y" }}
+                                </p>
+                                <p class="mb-1">
+                                    <strong>Status:</strong> 
+                                    <span class="badge 
+                                        {% if checkup.status == 'COMPLETED' %}bg-success
+                                        {% elif checkup.status == 'SCHEDULED' %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                        {{ checkup.get_status_display }}
+                                    </span>
+                                </p>
+                                {% if checkup.conducted_by %}
+                                <p class="mb-1">
+                                    <strong>Conducted by:</strong> {{ checkup.conducted_by }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 text-end">
+                                {% if checkup.next_checkup_date %}
+                                <div class="alert alert-warning mb-0">
+                                    <small><strong>Next Checkup:</strong><br>{{ checkup.next_checkup_date|date:"M d, Y" }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if checkup.findings %}
+                        <hr class="my-3">
+                        <div>
+                            <strong><i class="fas fa-clipboard-list me-2"></i> Findings:</strong>
+                            <p class="mt-2 mb-0">{{ checkup.findings }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if checkup.recommendations %}
+                        <hr class="my-3">
+                        <div>
+                            <strong><i class="fas fa-lightbulb me-2"></i> Recommendations:</strong>
+                            <p class="mt-2 mb-0">{{ checkup.recommendations }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No medical checkup records available yet.
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="info-card">
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i> 
+            You don't have an active membership yet. Please contact administration to set up your membership.
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="text-center">
+        <a href="{% url 'landing_page' %}" class="btn btn-outline-secondary btn-lg">
+            <i class="fas fa-home me-2"></i> Back to Home
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle exercise checkbox toggling
+    const checkboxes = document.querySelectorAll('.exercise-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const exerciseId = this.dataset.exerciseId;
+            const exerciseItem = document.getElementById('exercise-' + exerciseId);
+            
+            // Get CSRF token
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                             getCookie('csrftoken');
+            
+            // Send AJAX request
+            fetch('{% url "toggle_exercise_completion" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrftoken
+                },
+                body: 'exercise_id=' + exerciseId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.is_completed) {
+                        exerciseItem.classList.add('exercise-completed');
+                    } else {
+                        exerciseItem.classList.remove('exercise-completed');
+                    }
+                } else {
+                    alert('Error updating exercise status');
+                    this.checked = !this.checked;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating exercise status');
+                this.checked = !this.checked;
+            });
+        });
+    });
+    
+    // Helper function to get CSRF cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}

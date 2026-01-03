@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Approved Trainers - HealthHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .trainer-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin-bottom: 2rem;
+    }
+    
+    .trainer-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .trainer-header {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+    
+    .specialization-badge {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+    
+    .info-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-label i {
+        margin-right: 0.5rem;
+        color: #f59e0b;
+    }
+    
+    .info-value {
+        color: #1f2937;
+        margin-left: 1.75rem;
+    }
+    
+    .credentials-box {
+        background: #f9fafb;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+    }
+    
+    .api-info {
+        background: #eff6ff;
+        border: 2px solid #3b82f6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="trainer-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">
+                    <i class="fas fa-user-check me-3"></i> Approved Trainers
+                </h1>
+                <p class="mb-0 opacity-75">
+                    {{ total_approved }} qualified trainer{{ total_approved|pluralize }} available
+                </p>
+            </div>
+            <a href="{% url 'landing_page' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-home me-2"></i> Home
+            </a>
+        </div>
+    </div>
+    
+    <!-- API Access Information -->
+    <div class="api-info">
+        <h5 class="mb-3">
+            <i class="fas fa-robot me-2"></i> AI Assistant / API Access
+        </h5>
+        <p class="mb-2">
+            <strong>JSON Endpoint:</strong> 
+            <code>{{ request.scheme }}://{{ request.get_host }}{% url 'approved_trainers_list' %}?format=json</code>
+        </p>
+        <p class="mb-0 text-muted">
+            <small>Add <code>?format=json</code> to get trainer data in JSON format for AI assistants or applications.</small>
+        </p>
+    </div>
+    
+    {% if total_approved > 0 %}
+    <!-- Trainers List -->
+    <div class="row">
+        {% for item in trainers_with_ratings %}
+        <div class="col-lg-6 col-md-12">
+            <div class="trainer-card">
+                <!-- Trainer Name & Specialization -->
+                <div class="mb-3">
+                    <h3 class="mb-2">
+                        <i class="fas fa-user-tie text-warning me-2"></i>
+                        {{ item.profile.user.full_name }}
+                    </h3>
+                    <span class="specialization-badge">
+                        <i class="fas fa-dumbbell me-2"></i>{{ item.profile.specialization }}
+                    </span>
+                    
+                    <!-- Rating Display -->
+                    <div class="mt-3">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                {% if item.rating_count > 0 %}
+                                    <span class="text-warning fs-4 fw-bold">
+                                        <i class="fas fa-star"></i> {{ item.avg_rating }}
+                                    </span>
+                                    <small class="text-muted ms-1">({{ item.rating_count }} rating{{ item.rating_count|pluralize }})</small>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="far fa-star"></i> No ratings yet
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'trainer_ratings' item.profile.user.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-comments me-1"></i> View Reviews
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact Information -->
+                <div class="info-section">
+                    <h5 class="text-primary mb-3">
+                        <i class="fas fa-address-card me-2"></i> Contact Information
+                    </h5>
+                    
+                    <div class="info-label">
+                        <i class="fas fa-envelope"></i> Email
+                    </div>
+                    <div class="info-value">{{ item.profile.user.email }}</div>
+                    
+                    <div class="info-label mt-2">
+                        <i class="fas fa-phone"></i> Phone
+                    </div>
+                    <div class="info-value">{{ item.profile.user.phone_number }}</div>
+                </div>
+                
+                <!-- Professional Information -->
+                <div class="info-section">
+                    <h5 class="text-primary mb-3">
+                        <i class="fas fa-briefcase me-2"></i> Professional Information
+                    </h5>
+                    
+                    <div class="info-label">
+                        <i class="fas fa-graduation-cap"></i> Qualification
+                    </div>
+                    <div class="info-value">{{ item.profile.qualification }}</div>
+                    
+                    <div class="info-label mt-2">
+                        <i class="fas fa-clock"></i> Experience
+                    </div>
+                    <div class="info-value">{{ item.profile.experience_years }} year{{ item.profile.experience_years|pluralize }}</div>
+                </div>
+                
+                <!-- Certifications -->
+                <div class="info-section">
+                    <div class="info-label">
+                        <i class="fas fa-certificate"></i> Certifications
+                    </div>
+                    <div class="credentials-box">
+                        {{ item.profile.certification_details|linebreaks }}
+                    </div>
+                </div>
+                
+                <!-- Licenses (if available) -->
+                {% if item.profile.licenses %}
+                <div class="info-section">
+                    <div class="info-label">
+                        <i class="fas fa-id-card"></i> Professional Licenses
+                    </div>
+                    <div class="credentials-box">
+                        {{ item.profile.licenses|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Accreditations (if available) -->
+                {% if item.profile.accreditations %}
+                <div class="info-section">
+                    <div class="info-label">
+                        <i class="fas fa-award"></i> Accreditations
+                    </div>
+                    <div class="credentials-box">
+                        {{ item.profile.accreditations|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Approval Information -->
+                <div class="info-section border-top pt-3 mt-3">
+                    <div class="d-flex justify-content-between align-items-center text-muted">
+                        <small>
+                            <i class="fas fa-check-circle text-success me-1"></i>
+                            Approved: {{ item.profile.approval_date|date:"M d, Y" }}
+                        </small>
+                        {% if item.profile.approved_by %}
+                        <small>
+                            By: {{ item.profile.approved_by.full_name }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- No Trainers Message -->
+    <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle me-2"></i>
+        No approved trainers available at this time.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

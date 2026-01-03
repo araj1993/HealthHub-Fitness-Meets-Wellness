@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - HealthHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        max-width: 500px;
+        margin: 80px auto;
+    }
+    
+    .login-card {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 24px;
+        padding: 3rem;
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
+    }
+    
+    .login-icon {
+        font-size: 4rem;
+        color: #3b82f6;
+        margin-bottom: 1.5rem;
+    }
+    
+    .role-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="text-center">
+                <div class="login-icon">
+                    <i class="fas fa-sign-in-alt"></i>
+                </div>
+                <h2 class="fw-bold mb-2" style="color: #1e293b;">Welcome Back</h2>
+                <p class="text-muted mb-4">Login to access your dashboard</p>
+                
+                <div class="mb-4">
+                    <span class="role-badge bg-primary text-white">
+                        <i class="fas fa-user-shield me-1"></i> Admin
+                    </span>
+                    <span class="role-badge bg-success text-white">
+                        <i class="fas fa-dumbbell me-1"></i> User
+                    </span>
+                    <span class="role-badge bg-warning text-dark">
+                        <i class="fas fa-user-tie me-1"></i> Trainer
+                    </span>
+                </div>
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label for="username" class="form-label fw-semibold">
+                        <i class="fas fa-user me-2"></i> Username
+                    </label>
+                    <input type="text" class="form-control form-control-lg" id="username" name="username" 
+                           placeholder="Enter your username" required autofocus>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="password" class="form-label fw-semibold">
+                        <i class="fas fa-lock me-2"></i> Password
+                    </label>
+                    <input type="password" class="form-control form-control-lg" id="password" name="password" 
+                           placeholder="Enter your password" required>
+                </div>
+                
+                <div class="d-grid mb-3">
+                    <button type="submit" class="btn btn-primary btn-lg py-3">
+                        <i class="fas fa-sign-in-alt me-2"></i> Login
+                    </button>
+                </div>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <p class="text-muted mb-2">Don't have an account?</p>
+                    <a href="{% url 'home' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-2"></i> Register Now
+                    </a>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'landing_page' %}" class="text-muted text-decoration-none">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Home
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

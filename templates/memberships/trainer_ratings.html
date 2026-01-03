@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ trainer.full_name }} - Reviews - HealthHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ratings-header {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+    
+    .rating-summary {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .avg-rating-display {
+        text-align: center;
+        padding: 2rem;
+        border-right: 2px solid #e5e7eb;
+    }
+    
+    .avg-rating-number {
+        font-size: 4rem;
+        font-weight: bold;
+        color: #f59e0b;
+        line-height: 1;
+    }
+    
+    .rating-distribution {
+        padding: 1rem 2rem;
+    }
+    
+    .rating-bar {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .rating-bar-label {
+        width: 80px;
+        font-weight: 600;
+    }
+    
+    .rating-bar-fill {
+        flex: 1;
+        height: 20px;
+        background: #e5e7eb;
+        border-radius: 10px;
+        margin: 0 1rem;
+        overflow: hidden;
+    }
+    
+    .rating-bar-fill-inner {
+        height: 100%;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        transition: width 0.5s ease;
+    }
+    
+    .rating-bar-count {
+        width: 50px;
+        text-align: right;
+        color: #6b7280;
+    }
+    
+    .review-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+        transition: transform 0.2s ease;
+    }
+    
+    .review-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+    
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .reviewer-name {
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .review-stars {
+        color: #fbbf24;
+        font-size: 1.2rem;
+    }
+    
+    .review-date {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    
+    .review-text {
+        color: #4b5563;
+        line-height: 1.6;
+    }
+    
+    .no-reviews {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="ratings-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">
+                    <i class="fas fa-user-tie me-3"></i> {{ trainer.full_name }}
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Trainer Reviews & Ratings
+                </p>
+            </div>
+            <a href="{% url 'approved_trainers_list' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-arrow-left me-2"></i> Back to Trainers
+            </a>
+        </div>
+    </div>
+    
+    <!-- Rating Summary -->
+    <div class="rating-summary">
+        <div class="row">
+            <!-- Average Rating -->
+            <div class="col-md-4">
+                <div class="avg-rating-display">
+                    <div class="avg-rating-number">{{ avg_rating }}</div>
+                    <div class="mt-2">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= avg_rating %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% else %}
+                                <i class="far fa-star text-warning"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <p class="text-muted mt-2 mb-0">
+                        Based on {{ total_ratings }} rating{{ total_ratings|pluralize }}
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Rating Distribution -->
+            <div class="col-md-8">
+                <div class="rating-distribution">
+                    <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Rating Distribution</h5>
+                    
+                    {% for item in rating_distribution %}
+                    <div class="rating-bar">
+                        <div class="rating-bar-label">
+                            {{ item.stars }} <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <div class="rating-bar-fill">
+                            <div class="rating-bar-fill-inner" style="width: {{ item.percentage }}%"></div>
+                        </div>
+                        <div class="rating-bar-count">{{ item.count }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reviews List -->
+    <div class="reviews-container">
+        <h3 class="mb-4">
+            <i class="fas fa-comments me-2"></i> User Reviews
+        </h3>
+        
+        {% if ratings %}
+            {% for rating in ratings %}
+            <div class="review-card">
+                <div class="review-header">
+                    <div>
+                        <div class="reviewer-name">
+                            <i class="fas fa-user-circle me-2"></i>
+                            {{ rating.user.full_name }}
+                        </div>
+                        <div class="review-date mt-1">
+                            <i class="far fa-clock me-1"></i>
+                            {{ rating.created_at|date:"F d, Y" }}
+                        </div>
+                    </div>
+                    <div class="review-stars">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= rating.rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                {% if rating.review %}
+                <div class="review-text">
+                    {{ rating.review|linebreaks }}
+                </div>
+                {% else %}
+                <div class="review-text text-muted fst-italic">
+                    No written review provided.
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-reviews">
+                <i class="far fa-comment-dots fa-3x mb-3 d-block"></i>
+                <h5>No reviews yet</h5>
+                <p class="text-muted">Be the first to review this trainer!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Custom filter for template calculations
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate rating bars
+        const bars = document.querySelectorAll('.rating-bar-fill-inner');
+        bars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 100);
+        });
+    });
+</script>
+{% endblock %}

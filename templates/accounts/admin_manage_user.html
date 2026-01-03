@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage {{ managed_user.full_name }} - Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .workout-day {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .exercise-item {
+        background: #f3f4f6;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 6px;
+        border-left: 4px solid #10b981;
+    }
+    
+    .protein-form {
+        background: #f9fafb;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="admin-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-2">
+                    <i class="fas fa-user-cog me-3"></i> Manage User Data
+                </h1>
+                <p class="mb-0 opacity-75">
+                    {{ managed_user.full_name }} - {{ membership.get_membership_tier_display }}
+                </p>
+            </div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+    
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills mb-4" id="adminManageTabs" role="tablist">
+        {% if membership.membership_tier == 'L2' %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="workout-tab" data-bs-toggle="tab" data-bs-target="#workout" type="button">
+                <i class="fas fa-dumbbell me-2"></i> Workout Plans
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a href="{% url 'admin_workout_progress_chart' managed_user.id %}" class="nav-link">
+                <i class="fas fa-chart-line me-2"></i> Progress Charts
+            </a>
+        </li>
+        {% endif %}
+        {% if membership.extra_protein_needed %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if membership.membership_tier != 'L2' %}active{% endif %}" 
+                    id="protein-tab" data-bs-toggle="tab" data-bs-target="#protein" type="button">
+                <i class="fas fa-flask me-2"></i> Protein Intake
+            </button>
+        </li>
+        {% endif %}
+        {% if membership.membership_tier == 'L1' or membership.membership_tier == 'L2' %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if membership.membership_tier == 'L1' and not membership.extra_protein_needed %}active{% endif %}" 
+                    id="medical-tab" data-bs-toggle="tab" data-bs-target="#medical" type="button">
+                <i class="fas fa-heartbeat me-2"></i> Medical Checkups
+            </button>
+        </li>
+        {% endif %}
+    </ul>
+    
+    <!-- Tab Content -->
+    <div class="tab-content" id="adminManageTabsContent">
+        <!-- Workout Plans Tab -->
+        {% if membership.membership_tier == 'L2' %}
+        <div class="tab-pane fade show active" id="workout" role="tabpanel">
+            <div class="section-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3><i class="fas fa-dumbbell me-2 text-primary"></i> Workout Plans</h3>
+                    <a href="{% url 'admin_create_workout_plan' managed_user.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i> Create New Workout Plan
+                    </a>
+                </div>
+                
+                {% if workout_plans %}
+                    {% for plan in workout_plans %}
+                    <div class="workout-day">
+                        <h5 class="text-primary">{{ plan.get_day_of_week_display }}</h5>
+                        <p class="text-muted small mb-3">
+                            Week {{ plan.week_number }} ({{ plan.start_date|date:"M d" }} - {{ plan.end_date|date:"M d, Y" }})
+                        </p>
+                        
+                        {% if plan.exercises.all %}
+                            {% for exercise in plan.exercises.all %}
+                            <div class="exercise-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>{{ exercise.exercise_name }}</strong>
+                                        <span class="badge bg-secondary ms-2">{{ exercise.get_exercise_type_display }}</span>
+                                        {% if exercise.is_completed %}
+                                            <span class="badge bg-success ms-1"><i class="fas fa-check"></i> Completed</span>
+                                        {% endif %}
+                                        <br>
+                                        <small class="text-muted">{{ exercise.sets }} sets × {{ exercise.reps }} reps</small>
+                                        {% if exercise.description %}
+                                        <p class="mb-0 mt-1 small">{{ exercise.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No exercises for this day</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No workout plans available. Click "Create New Workout Plan" to get started.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Protein Intake Tab -->
+        {% if membership.extra_protein_needed %}
+        <div class="tab-pane fade {% if membership.membership_tier != 'L2' %}show active{% endif %}" id="protein" role="tabpanel">
+            <div class="section-card">
+                <h3 class="mb-4"><i class="fas fa-flask me-2 text-primary"></i> Protein Intake Management</h3>
+                
+                <div class="protein-form">
+                    <h5 class="mb-3">Add/Update Protein Intake Record</h5>
+                    <form id="proteinIntakeForm">
+                        {% csrf_token %}
+                        <input type="hidden" name="membership_id" value="{{ membership.id }}">
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-control" name="date" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" name="morning" id="morningIntake">
+                                    <label class="form-check-label" for="morningIntake">
+                                        Morning Intake
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" name="evening" id="eveningIntake">
+                                    <label class="form-check-label" for="eveningIntake">
+                                        Evening Intake
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Notes (Optional)</label>
+                            <textarea class="form-control" name="notes" rows="2"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-2"></i> Save Protein Intake
+                        </button>
+                    </form>
+                </div>
+                
+                <hr class="my-4">
+                
+                <h5 class="mb-3">Recent Records</h5>
+                {% if protein_intakes %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Morning</th>
+                                <th>Evening</th>
+                                <th>Notes</th>
+                                <th>Updated By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for intake in protein_intakes %}
+                            <tr>
+                                <td>{{ intake.date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if intake.morning_intake %}
+                                        <span class="badge bg-success"><i class="fas fa-check"></i></span>
+                                    {% else %}
+                                        <span class="badge bg-secondary"><i class="fas fa-times"></i></span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if intake.evening_intake %}
+                                        <span class="badge bg-success"><i class="fas fa-check"></i></span>
+                                    {% else %}
+                                        <span class="badge bg-secondary"><i class="fas fa-times"></i></span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ intake.notes|default:"—" }}</td>
+                                <td>{{ intake.updated_by_admin.full_name|default:"—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No protein intake records yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Medical Checkups Tab -->
+        {% if membership.membership_tier == 'L1' or membership.membership_tier == 'L2' %}
+        <div class="tab-pane fade {% if membership.membership_tier == 'L1' and not membership.extra_protein_needed %}show active{% endif %}" id="medical" role="tabpanel">
+            <div class="section-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3><i class="fas fa-heartbeat me-2 text-primary"></i> Medical Checkups</h3>
+                    <a href="{% url 'admin_add_medical_checkup' managed_user.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i> Add Medical Checkup
+                    </a>
+                </div>
+                
+                {% if membership.medical_history %}
+                <div class="alert alert-warning mb-4">
+                    <strong><i class="fas fa-exclamation-triangle me-2"></i> Medical History:</strong>
+                    <p class="mb-0 mt-2">{{ membership.medical_history }}</p>
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i> No medical history recorded for this user.
+                </div>
+                {% endif %}
+                
+                {% if medical_checkups %}
+                    {% for checkup in medical_checkups %}
+                    <div class="card mb-3 border-start border-5 
+                        {% if checkup.status == 'COMPLETED' %}border-success
+                        {% elif checkup.status == 'SCHEDULED' %}border-warning
+                        {% else %}border-danger{% endif %}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 class="card-title">{{ checkup.checkup_type }}</h5>
+                                    <p class="mb-1"><strong>Date:</strong> {{ checkup.checkup_date|date:"F d, Y" }}</p>
+                                    <p class="mb-1">
+                                        <strong>Status:</strong> 
+                                        <span class="badge 
+                                            {% if checkup.status == 'COMPLETED' %}bg-success
+                                            {% elif checkup.status == 'SCHEDULED' %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ checkup.get_status_display }}
+                                        </span>
+                                    </p>
+                                    {% if checkup.conducted_by %}
+                                    <p class="mb-1"><strong>Conducted by:</strong> {{ checkup.conducted_by }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4">
+                                    {% if checkup.next_checkup_date %}
+                                    <div class="alert alert-info mb-0">
+                                        <small><strong>Next Checkup:</strong><br>{{ checkup.next_checkup_date|date:"M d, Y" }}</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if checkup.findings %}
+                            <hr>
+                            <p class="mb-1"><strong>Findings:</strong></p>
+                            <p>{{ checkup.findings }}</p>
+                            {% endif %}
+                            
+                            {% if checkup.recommendations %}
+                            <hr>
+                            <p class="mb-1"><strong>Recommendations:</strong></p>
+                            <p class="mb-0">{{ checkup.recommendations }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No medical checkup records yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('proteinIntakeForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        membership_id: formData.get('membership_id'),
+        date: formData.get('date'),
+        morning: formData.get('morning') ? 'true' : 'false',
+        evening: formData.get('evening') ? 'true' : 'false',
+        notes: formData.get('notes')
+    };
+    
+    fetch('{% url "admin_update_protein_intake" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        },
+        body: new URLSearchParams(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Protein intake record saved successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving protein intake record');
+    });
+});
+</script>
+{% endblock %}
