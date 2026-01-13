@@ -544,7 +544,7 @@ def admin_manage_user_data(request, user_id):
         messages.error(request, 'User has no membership.')
         return redirect('admin_dashboard')
     
-    # Get current week workout plans
+    # Get current week workout plans (for L2 and L3)
     current_date = timezone.now().date()
     workout_plans = WorkoutPlan.objects.filter(
         membership=membership,
@@ -563,12 +563,23 @@ def admin_manage_user_data(request, user_id):
         membership=membership
     ).order_by('-checkup_date')
     
+    # Get L3 add-ons and assigned trainers (for L3 users)
+    from memberships.models import L3Addon, TrainerRating
+    l3_addons = L3Addon.objects.filter(membership=membership).select_related('assigned_trainer')
+    trainer_ratings = TrainerRating.objects.filter(membership=membership).select_related('trainer')
+    
+    # Get all approved trainers for assignment
+    approved_trainers = User.objects.filter(role='TRAINER', trainer_profile__approval_status='APPROVED')
+    
     context = {
         'managed_user': user,
         'membership': membership,
         'workout_plans': workout_plans,
         'protein_intakes': protein_intakes,
         'medical_checkups': medical_checkups,
+        'l3_addons': l3_addons,
+        'trainer_ratings': trainer_ratings,
+        'approved_trainers': approved_trainers,
     }
     return render(request, 'accounts/admin_manage_user.html', context)
 
@@ -611,13 +622,13 @@ def admin_update_protein_intake(request):
 
 @login_required
 def admin_create_workout_plan(request, user_id):
-    """Admin creates/updates workout plan for L2 user"""
+    """Admin creates/updates workout plan for L2 and L3 users"""
     if request.user.role != 'ADMIN':
         messages.error(request, 'Access denied. Admin only.')
         return redirect('landing_page')
     
     user = get_object_or_404(User, id=user_id, role='USER')
-    membership = get_object_or_404(UserMembership, user=user, membership_tier='L2')
+    membership = get_object_or_404(UserMembership, user=user, membership_tier__in=['L2', 'L3'])
     
     if request.method == 'POST':
         week_number = int(request.POST.get('week_number', 1))
@@ -728,8 +739,8 @@ def workout_progress_chart(request, user_id=None):
     
     try:
         membership = UserMembership.objects.get(user=user)
-        if membership.membership_tier != 'L2':
-            messages.error(request, 'Workout charts are only available for L2 members.')
+        if membership.membership_tier not in ['L2', 'L3']:
+            messages.error(request, 'Workout charts are only available for L2 and L3 members.')
             return redirect('user_dashboard' if request.user.role == 'USER' else 'admin_dashboard')
     except UserMembership.DoesNotExist:
         messages.error(request, 'No membership found.')
@@ -920,4 +931,38 @@ def approved_trainers_list(request):
         'total_approved': len(trainers_with_ratings)
     }
     return render(request, 'accounts/approved_trainers.html', context)
-    return redirect('admin_dashboard')
+
+
+@login_required
+@require_POST
+def admin_assign_trainer_to_addon(request):
+    """Admin assigns a trainer to an L3 add-on"""
+    if request.user.role != 'ADMIN':
+        return JsonResponse({'success': False, 'error': 'Access denied'}, status=403)
+    
+    addon_id = request.POST.get('addon_id')
+    trainer_id = request.POST.get('trainer_id')
+    
+    try:
+        from memberships.models import L3Addon
+        addon = L3Addon.objects.get(id=addon_id)
+        
+        if trainer_id and trainer_id != '':
+            trainer = User.objects.get(id=trainer_id, role='TRAINER')
+            addon.assigned_trainer = trainer
+        else:
+            addon.assigned_trainer = None
+        
+        addon.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Trainer assignment updated successfully',
+            'trainer_name': addon.assigned_trainer.full_name if addon.assigned_trainer else 'Unassigned'
+        })
+    except L3Addon.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Add-on not found'}, status=404)
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Trainer not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)

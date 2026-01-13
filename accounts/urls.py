@@ -34,4 +34,7 @@ urlpatterns = [
     # Payment confirmation URLs
     path('dashboard/admin/confirm-payment/<int:user_id>/', views.confirm_payment, name='confirm_payment'),
     path('dashboard/admin/cancel-payment/<int:user_id>/', views.cancel_payment, name='cancel_payment'),
+    
+    # L3 trainer assignment
+    path('dashboard/admin/assign-trainer/', views.admin_assign_trainer_to_addon, name='admin_assign_trainer_to_addon'),
 ]

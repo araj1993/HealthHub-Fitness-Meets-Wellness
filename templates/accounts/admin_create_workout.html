@@ -50,14 +50,14 @@
 <div class="container py-4">
     <div class="admin-header">
         <h1><i class="fas fa-dumbbell me-3"></i> Create Weekly Workout Plan</h1>
-        <p class="mb-0 opacity-75">For {{ managed_user.full_name }} - L2 ProActive Member</p>
+        <p class="mb-0 opacity-75">For {{ managed_user.full_name }} - {{ membership.get_membership_tier_display }} Member</p>
     </div>
     
     <div class="ai-suggestion">
         <h4 class="mb-3"><i class="fas fa-robot me-2"></i> AI-Generated Workout Plan Template</h4>
         <p class="mb-2">
             <i class="fas fa-lightbulb me-2"></i> 
-            <strong>Recommended weekly structure for L2 members:</strong>
+            <strong>Recommended weekly structure for {{ membership.get_membership_tier_display }} members:</strong>
         </p>
         <ul class="mb-0">
             <li><strong>Monday:</strong> Upper Body Strength (Chest, Shoulders, Triceps)</li>

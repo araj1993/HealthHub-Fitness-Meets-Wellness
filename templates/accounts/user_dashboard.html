@@ -152,7 +152,7 @@
                 </button>
             </li>
             {% endif %}
-            {% if membership.membership_tier == 'L2' %}
+            {% if membership.membership_tier == 'L2' or membership.membership_tier == 'L3' %}
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="workout-tab" data-bs-toggle="tab" data-bs-target="#workout" type="button" role="tab">
                     <i class="fas fa-dumbbell me-2"></i> Workout Plan
@@ -409,7 +409,7 @@
             {% endif %}
             
             <!-- Workout Plan Tab -->
-            {% if membership.membership_tier == 'L2' %}
+            {% if membership.membership_tier == 'L2' or membership.membership_tier == 'L3' %}
             <div class="tab-pane fade" id="workout" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3 class="mb-0">

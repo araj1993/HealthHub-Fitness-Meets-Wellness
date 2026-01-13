@@ -15,19 +15,15 @@ from django.core.wsgi import get_wsgi_application
 
 import os
 import sys
+from pathlib import Path
 
-# Add your project directory to the sys.path
-project_home = '/home/araj1/HealthHub-Where-Fitness-Meets-Wellness'
-if project_home not in sys.path:
-    sys.path.insert(0, project_home)
+# Get the project directory dynamically
+project_home = Path(__file__).resolve().parent.parent
+if str(project_home) not in sys.path:
+    sys.path.insert(0, str(project_home))
 
 # Set environment variable to tell Django where your settings are
-os.environ['DJANGO_SETTINGS_MODULE'] = 'healthhub.settings'
-
-# Activate your virtual environment
-activate_this = '/home/araj1/HealthHub-Where-Fitness-Meets-Wellness/venv/bin/activate_this.py'
-with open(activate_this) as file_:
-    exec(file_.read(), dict(__file__=activate_this))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'healthhub.settings')
 
 # Import the Django WSGI application
 from django.core.wsgi import get_wsgi_application
